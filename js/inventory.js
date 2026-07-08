@@ -1,0 +1,351 @@
+// ═══════════════════════════════════════
+//  INVENTARIO / TABLA
+// ═══════════════════════════════════════
+
+let filtroActual = { buscar: '', categoria: '', stock: '', ubicacion: '' };
+let idEliminar = null;
+let fotoBase64Actual = null;
+
+function filtrarProductos() {
+  filtroActual.buscar = document.getElementById('buscarInput').value.toLowerCase();
+  filtroActual.categoria = document.getElementById('filtroCategoria').value;
+  filtroActual.stock = document.getElementById('filtroStock').value;
+  if (esModoHogar()) {
+    filtroActual.ubicacion = document.getElementById('filtroUbicacion').value;
+  }
+  renderTabla();
+}
+
+function renderTabla() {
+  // Actualizar opciones de categoría
+  const sel = document.getElementById('filtroCategoria');
+  const valActual = sel.value;
+  sel.innerHTML = '<option value="">Todas las categorías</option>' +
+    config.categorias.map(c => `<option value="${c}">${c}</option>`).join('');
+  sel.value = valActual;
+
+  // Actualizar opciones de ubicación (solo modo hogar)
+  if (esModoHogar()) {
+    const selUbic = document.getElementById('filtroUbicacion');
+    const valUbic = selUbic.value;
+    selUbic.innerHTML = '<option value="">Todas las ubicaciones</option>' +
+      (config.ubicaciones || []).map(u => `<option value="${u}">${u}</option>`).join('');
+    selUbic.value = valUbic;
+  }
+
+  let pFiltrados = productos.filter(p => {
+    const matchBuscar = !filtroActual.buscar ||
+      p.nombre.toLowerCase().includes(filtroActual.buscar) ||
+      (p.marca||'').toLowerCase().includes(filtroActual.buscar) ||
+      (p.proveedor||'').toLowerCase().includes(filtroActual.buscar);
+    const matchCat = !filtroActual.categoria || p.categoria === filtroActual.categoria;
+    const cs = claseStock(p);
+    const matchStock = !filtroActual.stock || cs === filtroActual.stock;
+    const matchUbic = !esModoHogar() || !filtroActual.ubicacion || p.ubicacion === filtroActual.ubicacion;
+    return matchBuscar && matchCat && matchStock && matchUbic;
+  });
+
+  const thead = document.getElementById('tablaHead');
+  const tbody = document.getElementById('tablaBody');
+  const sinProd = document.getElementById('sinProductos');
+
+  if (pFiltrados.length === 0) {
+    thead.innerHTML = '';
+    tbody.innerHTML = '';
+    sinProd.style.display = 'block';
+    return;
+  }
+
+  sinProd.style.display = 'none';
+
+  // Renderizar headers según modo
+  if (esModoHogar()) {
+    thead.innerHTML = `
+      <tr>
+        <th>Foto</th>
+        <th>Producto</th>
+        <th>Marca</th>
+        <th>Categoría</th>
+        <th>Cantidad</th>
+        <th>Unidad</th>
+        <th>Vencimiento</th>
+        <th>Ubicación</th>
+        <th>Acciones</th>
+      </tr>`;
+  } else {
+    thead.innerHTML = `
+      <tr>
+        <th>Foto</th>
+        <th>Producto</th>
+        <th>Marca</th>
+        <th>Categoría</th>
+        <th>Precio Venta</th>
+        <th>Precio Costo</th>
+        <th>Stock</th>
+        <th>Vencimiento</th>
+        <th>Abastecimiento</th>
+        <th>Acciones</th>
+      </tr>`;
+  }
+
+  // Renderizar filas según modo
+  tbody.innerHTML = pFiltrados.map(p => {
+    const cs = claseStock(p);
+    const diasVenc = p.fechaVencimiento ? diasHastaFecha(p.fechaVencimiento) : null;
+    const thumbHtml = p.foto
+      ? `<img class="thumb-tabla" src="${p.foto}" alt="foto">`
+      : `<div class="thumb-placeholder">📦</div>`;
+    
+    if (esModoHogar()) {
+      return `<tr>
+        <td>${thumbHtml}</td>
+        <td>
+          <div class="producto-td-texto">
+            <span class="nombre-producto">${escHtml(p.nombre)}</span>
+            ${p.marca ? `<span class="marca-badge-tabla">${escHtml(p.marca)}</span>` : ''}
+          </div>
+        </td>
+        <td style="color:var(--texto-suave);font-size:0.85rem">${p.marca ? escHtml(p.marca) : '<span class="fecha-na">—</span>'}</td>
+        <td><span class="categoria-badge">${escHtml(p.categoria || 'General')}</span></td>
+        <td><span class="stock-badge stock-${cs}">${p.stock}</span></td>
+        <td style="color:var(--texto-suave);font-size:0.85rem">${p.unidad || 'unid.'}</td>
+        <td>${p.fechaVencimiento
+          ? `<span class="fecha-badge ${claseFecha(diasVenc)}">${textoFecha(p.fechaVencimiento)}</span>`
+          : '<span class="fecha-na">Sin fecha</span>'}</td>
+        <td><span class="categoria-badge">${escHtml(p.ubicacion || '—')}</span></td>
+        <td>
+          <div class="acciones-td">
+            <button class="btn btn-secundario btn-sm" onclick="editarProducto('${p.id}')">✏️</button>
+            <button class="btn btn-peligro btn-sm" onclick="pedirEliminar('${p.id}')">🗑️</button>
+          </div>
+        </td>
+      </tr>`;
+    } else {
+      return `<tr>
+        <td>${thumbHtml}</td>
+        <td>
+          <div class="producto-td-texto">
+            <span class="nombre-producto">${escHtml(p.nombre)}</span>
+            ${p.marca ? `<span class="marca-badge-tabla">${escHtml(p.marca)}</span>` : ''}
+          </div>
+        </td>
+        <td style="color:var(--texto-suave);font-size:0.85rem">${p.marca ? escHtml(p.marca) : '<span class="fecha-na">—</span>'}</td>
+        <td><span class="categoria-badge">${escHtml(p.categoria || 'General')}</span></td>
+        <td class="precio-td">${formatPrecio(p.precioVenta)}</td>
+        <td class="precio-td" style="color:var(--texto-suave)">${formatPrecio(p.precioCosto)}</td>
+        <td><span class="stock-badge stock-${cs}">${p.stock} ${p.unidad || ''}</span></td>
+        <td>${p.fechaVencimiento
+          ? `<span class="fecha-badge ${claseFecha(diasVenc)}">${textoFecha(p.fechaVencimiento)}</span>`
+          : '<span class="fecha-na">Sin fecha</span>'}</td>
+        <td>${p.fechaAbastecimiento
+          ? `<span style="font-size:0.82rem;color:var(--texto-suave)">${formatearFechaMostrar(p.fechaAbastecimiento)}</span>`
+          : '<span class="fecha-na">—</span>'}</td>
+        <td>
+          <div class="acciones-td">
+            <button class="btn btn-secundario btn-sm" onclick="editarProducto('${p.id}')">✏️</button>
+            <button class="btn btn-peligro btn-sm" onclick="pedirEliminar('${p.id}')">🗑️</button>
+          </div>
+        </td>
+      </tr>`;
+    }
+  }).join('');
+}
+
+// ─── FOTO DE PRODUCTO ──────────────────────────────────
+
+function aplicarFotoEnZona(base64) {
+  fotoBase64Actual = base64 || null;
+  const zona = document.getElementById('fotoZona');
+  if (!zona) return;
+
+  // Limpiar contenido previo (excepto el input)
+  const inputFile = zona.querySelector('input[type="file"]');
+  zona.innerHTML = '';
+  zona.appendChild(inputFile);
+
+  if (base64) {
+    zona.classList.add('con-foto');
+    const img = document.createElement('img');
+    img.className = 'foto-preview';
+    img.src = base64;
+    zona.appendChild(img);
+    const btnQuitar = document.createElement('button');
+    btnQuitar.type = 'button';
+    btnQuitar.className = 'foto-quitar';
+    btnQuitar.title = 'Quitar foto';
+    btnQuitar.innerHTML = '✕';
+    btnQuitar.onclick = (e) => { e.stopPropagation(); aplicarFotoEnZona(null); };
+    zona.appendChild(btnQuitar);
+  } else {
+    zona.classList.remove('con-foto');
+    zona.insertAdjacentHTML('beforeend', `
+      <span class="foto-placeholder-icon">📷</span>
+      <span class="foto-placeholder-txt">Toca para subir una foto<br><small>JPG, PNG, WEBP · Máx. 2 MB</small></span>
+    `);
+  }
+}
+
+function previsualizarFoto(event) {
+  const archivo = event.target.files[0];
+  if (!archivo) return;
+
+  if (archivo.size > 2 * 1024 * 1024) {
+    toast('La imagen es muy grande. Máx. 2 MB.', 'aviso');
+    event.target.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 400;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else       { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const base64 = canvas.toDataURL('image/jpeg', 0.75);
+      aplicarFotoEnZona(base64);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(archivo);
+  event.target.value = '';
+}
+
+// ─── MODAL PRODUCTO ──────────────────────────────────
+
+function abrirModalProducto(id = null) {
+  document.getElementById('modalTitulo').textContent = id ? '✏️ Editar Producto' : '➕ Agregar Producto';
+  document.getElementById('productoId').value = id || '';
+
+  // Poblar categorías
+  const sel = document.getElementById('fpCategoria');
+  sel.innerHTML = config.categorias.map(c => `<option value="${c}">${c}</option>`).join('');
+
+  // Poblar ubicaciones (solo modo hogar)
+  if (esModoHogar()) {
+    const selUbic = document.getElementById('fpUbicacion');
+    selUbic.innerHTML = '<option value="">Sin ubicación</option>' +
+      (config.ubicaciones || []).map(u => `<option value="${u}">${u}</option>`).join('');
+  }
+
+  // Hacer precioVenta obligatorio solo en modo negocio
+  document.getElementById('fpPrecioVenta').required = esModoNegocio();
+
+  if (id) {
+    const p = productos.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('fpNombre').value = p.nombre || '';
+    document.getElementById('fpMarca').value = p.marca || '';
+    sel.value = p.categoria || 'General';
+    document.getElementById('fpUnidad').value = p.unidad || 'unidad';
+    document.getElementById('fpPrecioVenta').value = p.precioVenta ?? '';
+    document.getElementById('fpPrecioCosto').value = p.precioCosto ?? '';
+    document.getElementById('fpStock').value = p.stock ?? '';
+    document.getElementById('fpStockMin').value = p.stockMin ?? '';
+    document.getElementById('fpFechaVencimiento').value = p.fechaVencimiento || '';
+    document.getElementById('fpFechaAbastecimiento').value = p.fechaAbastecimiento || '';
+    document.getElementById('fpProxAbastecimiento').value = p.proxAbastecimiento || '';
+    document.getElementById('fpProveedor').value = p.proveedor || '';
+    document.getElementById('fpNotas').value = p.notas || '';
+    if (esModoHogar()) {
+      document.getElementById('fpUbicacion').value = p.ubicacion || '';
+      document.getElementById('fpFechaCompra').value = p.fechaCompra || '';
+    }
+    // Cargar foto si existe
+    aplicarFotoEnZona(p.foto || null);
+  } else {
+    document.getElementById('formProducto').reset();
+    document.getElementById('productoId').value = '';
+    if (esModoNegocio()) {
+      document.getElementById('fpFechaAbastecimiento').value = new Date().toISOString().slice(0,10);
+    }
+    aplicarFotoEnZona(null);
+  }
+
+  document.getElementById('modalOverlay').classList.add('visible');
+}
+
+function cerrarModal() {
+  document.getElementById('modalOverlay').classList.remove('visible');
+}
+
+function cerrarModalSiOverlay(e) {
+  if (e.target === document.getElementById('modalOverlay')) cerrarModal();
+}
+
+function guardarProducto(e) {
+  e.preventDefault();
+  const id = document.getElementById('productoId').value;
+  const producto = {
+    id: id || genId(),
+    nombre: document.getElementById('fpNombre').value.trim(),
+    marca: document.getElementById('fpMarca').value.trim() || null,
+    categoria: document.getElementById('fpCategoria').value,
+    unidad: document.getElementById('fpUnidad').value,
+    precioVenta: esModoNegocio() ? (parseFloat(document.getElementById('fpPrecioVenta').value) || 0) : null,
+    precioCosto: esModoNegocio() ? (parseFloat(document.getElementById('fpPrecioCosto').value) || null) : null,
+    stock: parseInt(document.getElementById('fpStock').value) || 0,
+    stockMin: esModoNegocio() ? (parseInt(document.getElementById('fpStockMin').value) || null) : null,
+    fechaVencimiento: document.getElementById('fpFechaVencimiento').value || null,
+    fechaAbastecimiento: esModoNegocio() ? (document.getElementById('fpFechaAbastecimiento').value || null) : null,
+    proxAbastecimiento: esModoNegocio() ? (document.getElementById('fpProxAbastecimiento').value || null) : null,
+    proveedor: esModoNegocio() ? (document.getElementById('fpProveedor').value.trim() || null) : null,
+    ubicacion: esModoHogar() ? (document.getElementById('fpUbicacion').value || null) : null,
+    fechaCompra: esModoHogar() ? (document.getElementById('fpFechaCompra').value || null) : null,
+    notas: document.getElementById('fpNotas').value.trim() || null,
+    foto: fotoBase64Actual || (id ? (productos.find(p=>p.id===id)||{}).foto || null : null),
+    updatedAt: new Date().toISOString()
+  };
+
+  if (id) {
+    const idx = productos.findIndex(p => p.id === id);
+    if (idx !== -1) productos[idx] = producto;
+    toast('Producto actualizado correctamente');
+  } else {
+    producto.createdAt = new Date().toISOString();
+    productos.push(producto);
+    toast('Producto agregado correctamente');
+  }
+
+  guardarEnStorage();
+  cerrarModal();
+  renderTabla();
+  if (paginaActual === 'dashboard') renderDashboard();
+}
+
+function editarProducto(id) {
+  abrirModalProducto(id);
+}
+
+// ─── ELIMINAR PRODUCTO ──────────────────────────────
+
+function pedirEliminar(id) {
+  idEliminar = id;
+  const p = productos.find(x => x.id === id);
+  document.getElementById('confirmNombre').textContent = p ? p.nombre : 'este producto';
+  document.getElementById('modalConfirm').classList.add('visible');
+}
+
+function cerrarConfirm(e) {
+  if (!e || e.target === document.getElementById('modalConfirm')) {
+    document.getElementById('modalConfirm').classList.remove('visible');
+    idEliminar = null;
+  }
+}
+
+function confirmarEliminar() {
+  if (!idEliminar) return;
+  productos = productos.filter(p => p.id !== idEliminar);
+  guardarEnStorage();
+  document.getElementById('modalConfirm').classList.remove('visible');
+  idEliminar = null;
+  renderTabla();
+  if (paginaActual === 'dashboard') renderDashboard();
+  toast('Producto eliminado');
+}
