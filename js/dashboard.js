@@ -7,6 +7,19 @@ function renderDashboard() {
   const hoy = new Date();
   document.getElementById('fechaHoy').textContent = hoy.toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long' });
 
+  // Saludo personalizado si el usuario está logueado
+  const bienvenida = document.querySelector('.bienvenida h1');
+  if (bienvenida && typeof uidActual !== 'undefined' && uidActual) {
+    // Obtener el nombre del usuario de Firebase Auth
+    if (typeof auth !== 'undefined' && auth.currentUser) {
+      const user = auth.currentUser;
+      const nombre = user.displayName || user.email?.split('@')[0] || 'Usuario';
+      bienvenida.textContent = `¡Hola, ${nombre}! 👋`;
+    }
+  } else if (bienvenida) {
+    bienvenida.textContent = '¡Bienvenida/o! 👋';
+  }
+
   // Stats
   const total = productos.length;
   const agotados = productos.filter(p => p.stock <= 0).length;
