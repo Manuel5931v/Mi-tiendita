@@ -21,5 +21,6 @@ function mostrarPagina(pagina, btnElem) {
   if (pagina === 'inventario') renderTabla();
   if (pagina === 'ventas') renderVentas();
   if (pagina === 'reportes') renderReportes();
+  if (pagina === 'config') renderConfig();
   window.scrollTo(0, 0);
 }

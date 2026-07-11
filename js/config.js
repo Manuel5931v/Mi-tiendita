@@ -31,12 +31,15 @@ function renderConfig() {
 
 function renderCategorias() {
   const lista = document.getElementById('listaCategorias');
-  lista.innerHTML = config.categorias.map(c => `
-    <div class="cat-tag">
-      ${escHtml(c)}
-      <button class="cat-eliminar" onclick="eliminarCategoria('${escHtml(c)}')" title="Eliminar">×</button>
-    </div>
-  `).join('');
+  if (lista) {
+    lista.innerHTML = config.categorias.map(c => `
+      <div class="cat-tag">
+        ${escHtml(c)}
+        <button class="cat-eliminar" onclick="eliminarCategoria('${escHtml(c)}')" title="Eliminar">×</button>
+      </div>
+    `).join('');
+  }
+  // ❌ ELIMINADO: ya no se actualiza ningún select de eliminar
 }
 
 function agregarCategoria() {
@@ -52,19 +55,30 @@ function agregarCategoria() {
 }
 
 function eliminarCategoria(cat) {
+  // Verificar si hay productos usando esta categoría
+  const productosConCat = productos.filter(p => p.categoria === cat);
+  if (productosConCat.length > 0) {
+    toast(`No puedes eliminar "${cat}" porque ${productosConCat.length} producto(s) la usan. Primero reasigna o elimina esos productos.`, 'error');
+    return;
+  }
   config.categorias = config.categorias.filter(c => c !== cat);
   guardarEnStorage();
   renderCategorias();
+  toast(`Categoría "${cat}" eliminada`);
 }
+
+// ❌ ELIMINADA: función eliminarCategoriaSeleccionada()
 
 function renderUbicaciones() {
   const lista = document.getElementById('listaUbicaciones');
-  lista.innerHTML = (config.ubicaciones || []).map(u => `
-    <div class="cat-tag">
-      ${escHtml(u)}
-      <button class="cat-eliminar" onclick="eliminarUbicacion('${escHtml(u)}')" title="Eliminar">×</button>
-    </div>
-  `).join('');
+  if (lista) {
+    lista.innerHTML = (config.ubicaciones || []).map(u => `
+      <div class="cat-tag">
+        ${escHtml(u)}
+        <button class="cat-eliminar" onclick="eliminarUbicacion('${escHtml(u)}')" title="Eliminar">×</button>
+      </div>
+    `).join('');
+  }
 }
 
 function agregarUbicacion() {
@@ -134,6 +148,7 @@ function handleLogin(event) {
         cerrarModalLogin();
         document.getElementById('loginEmail').value = '';
         document.getElementById('loginPassword').value = '';
+        mostrarPagina('dashboard');
       })
       .catch(() => {});
   } else {
@@ -159,6 +174,7 @@ function handleRegistro(event) {
         document.getElementById('regEmail').value = '';
         document.getElementById('regPassword').value = '';
         document.getElementById('regPasswordConfirm').value = '';
+        mostrarPagina('dashboard');
       })
       .catch(() => {});
   } else {
@@ -184,12 +200,15 @@ function mostrarRecuperarPassword(event) {
 function actualizarUIAuth() {
   const authButtons = document.getElementById('authButtons');
   const logoutButton = document.getElementById('logoutButton');
+  const estadoCuenta = document.getElementById('estadoCuenta');
   
   if (typeof uidActual !== 'undefined' && uidActual) {
-    authButtons.style.display = 'none';
-    logoutButton.style.display = 'flex';
+    if (authButtons) authButtons.style.display = 'none';
+    if (logoutButton) logoutButton.style.display = 'flex';
+    if (estadoCuenta) estadoCuenta.textContent = '✅ Conectado como ' + (usuarioActual?.email || 'usuario');
   } else {
-    authButtons.style.display = 'flex';
-    logoutButton.style.display = 'none';
+    if (authButtons) authButtons.style.display = 'flex';
+    if (logoutButton) logoutButton.style.display = 'none';
+    if (estadoCuenta) estadoCuenta.textContent = 'No has iniciado sesión (modo local)';
   }
 }

@@ -46,109 +46,36 @@ function renderTabla() {
     return matchBuscar && matchCat && matchStock && matchUbic;
   });
 
-  const thead = document.getElementById('tablaHead');
-  const tbody = document.getElementById('tablaBody');
+  const grid = document.getElementById('inventarioGrid');
   const sinProd = document.getElementById('sinProductos');
 
   if (pFiltrados.length === 0) {
-    thead.innerHTML = '';
-    tbody.innerHTML = '';
+    grid.innerHTML = '';
     sinProd.style.display = 'block';
     return;
   }
 
   sinProd.style.display = 'none';
 
-  // Renderizar headers según modo
-  if (esModoHogar()) {
-    thead.innerHTML = `
-      <tr>
-        <th>Foto</th>
-        <th>Producto</th>
-        <th>Marca</th>
-        <th>Categoría</th>
-        <th>Cantidad</th>
-        <th>Unidad</th>
-        <th>Vencimiento</th>
-        <th>Ubicación</th>
-        <th>Acciones</th>
-      </tr>`;
-  } else {
-    thead.innerHTML = `
-      <tr>
-        <th>Foto</th>
-        <th>Producto</th>
-        <th>Marca</th>
-        <th>Categoría</th>
-        <th>Precio Venta</th>
-        <th>Precio Costo</th>
-        <th>Stock</th>
-        <th>Vencimiento</th>
-        <th>Abastecimiento</th>
-        <th>Acciones</th>
-      </tr>`;
-  }
+  grid.innerHTML = pFiltrados.map(p => {
+    const precioVenta = p.precioVenta != null ? formatPrecio(p.precioVenta) : '—';
+    const fotoHtml = p.foto
+      ? `<img class="inventario-card-img" src="${p.foto}" alt="${escHtml(p.nombre)}">`
+      : `<div class="inventario-card-noimg">📦</div>`;
 
-  // Renderizar filas según modo
-  tbody.innerHTML = pFiltrados.map(p => {
-    const cs = claseStock(p);
-    const diasVenc = p.fechaVencimiento ? diasHastaFecha(p.fechaVencimiento) : null;
-    const thumbHtml = p.foto
-      ? `<img class="thumb-tabla" src="${p.foto}" alt="foto">`
-      : `<div class="thumb-placeholder">📦</div>`;
-    
-    if (esModoHogar()) {
-      return `<tr>
-        <td>${thumbHtml}</td>
-        <td>
-          <div class="producto-td-texto">
-            <span class="nombre-producto">${escHtml(p.nombre)}</span>
-            ${p.marca ? `<span class="marca-badge-tabla">${escHtml(p.marca)}</span>` : ''}
-          </div>
-        </td>
-        <td style="color:var(--texto-suave);font-size:0.85rem">${p.marca ? escHtml(p.marca) : '<span class="fecha-na">—</span>'}</td>
-        <td><span class="categoria-badge">${escHtml(p.categoria || 'General')}</span></td>
-        <td><span class="stock-badge stock-${cs}">${p.stock}</span></td>
-        <td style="color:var(--texto-suave);font-size:0.85rem">${p.unidad || 'unid.'}</td>
-        <td>${p.fechaVencimiento
-          ? `<span class="fecha-badge ${claseFecha(diasVenc)}">${textoFecha(p.fechaVencimiento)}</span>`
-          : '<span class="fecha-na">Sin fecha</span>'}</td>
-        <td><span class="categoria-badge">${escHtml(p.ubicacion || '—')}</span></td>
-        <td>
-          <div class="acciones-td">
-            <button class="btn btn-secundario btn-sm" onclick="editarProducto('${p.id}')">✏️</button>
-            <button class="btn btn-peligro btn-sm" onclick="pedirEliminar('${p.id}')">🗑️</button>
-          </div>
-        </td>
-      </tr>`;
-    } else {
-      return `<tr>
-        <td>${thumbHtml}</td>
-        <td>
-          <div class="producto-td-texto">
-            <span class="nombre-producto">${escHtml(p.nombre)}</span>
-            ${p.marca ? `<span class="marca-badge-tabla">${escHtml(p.marca)}</span>` : ''}
-          </div>
-        </td>
-        <td style="color:var(--texto-suave);font-size:0.85rem">${p.marca ? escHtml(p.marca) : '<span class="fecha-na">—</span>'}</td>
-        <td><span class="categoria-badge">${escHtml(p.categoria || 'General')}</span></td>
-        <td class="precio-td">${formatPrecio(p.precioVenta)}</td>
-        <td class="precio-td" style="color:var(--texto-suave)">${formatPrecio(p.precioCosto)}</td>
-        <td><span class="stock-badge stock-${cs}">${p.stock} ${p.unidad || ''}</span></td>
-        <td>${p.fechaVencimiento
-          ? `<span class="fecha-badge ${claseFecha(diasVenc)}">${textoFecha(p.fechaVencimiento)}</span>`
-          : '<span class="fecha-na">Sin fecha</span>'}</td>
-        <td>${p.fechaAbastecimiento
-          ? `<span style="font-size:0.82rem;color:var(--texto-suave)">${formatearFechaMostrar(p.fechaAbastecimiento)}</span>`
-          : '<span class="fecha-na">—</span>'}</td>
-        <td>
-          <div class="acciones-td">
-            <button class="btn btn-secundario btn-sm" onclick="editarProducto('${p.id}')">✏️</button>
-            <button class="btn btn-peligro btn-sm" onclick="pedirEliminar('${p.id}')">🗑️</button>
-          </div>
-        </td>
-      </tr>`;
-    }
+    return `
+    <div class="inventario-card ${p.stock <= 0 ? 'agotado-card' : ''}" id="ic-${p.id}" onclick="abrirModalProducto('${p.id}')">
+      ${fotoHtml}
+      <div class="inventario-card-body">
+        <div class="inventario-card-cat">${escHtml(p.categoria || 'General')}</div>
+        <div class="inventario-card-nombre">${escHtml(p.nombre)}</div>
+        <div class="inventario-card-field">Precio: <strong>${precioVenta}</strong></div>
+        <div class="inventario-card-actions">
+          <button class="btn btn-secundario btn-sm" type="button" onclick="event.stopPropagation(); editarProducto('${p.id}')">✏️ Editar</button>
+          <button class="btn btn-peligro btn-sm" type="button" onclick="event.stopPropagation(); pedirEliminar('${p.id}')">🗑️ Eliminar</button>
+        </div>
+      </div>
+    </div>`;
   }).join('');
 }
 

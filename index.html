@@ -102,15 +102,7 @@
     </div>
 
     <div class="card" style="padding: 0;">
-      <div class="tabla-container">
-        <table>
-          <thead id="tablaHead">
-            <!-- Se llena dinámicamente según el modo -->
-          </thead>
-          <tbody id="tablaBody">
-          </tbody>
-        </table>
-      </div>
+      <div id="inventarioGrid" class="inventario-grid"></div>
       <div id="sinProductos" class="sin-productos" style="display:none;">
         <span class="icono-grande">📦</span>
         <p>No hay productos. ¡Agrega el primero!</p>
@@ -264,6 +256,7 @@
           <input type="text" id="nuevaCatInput" placeholder="Nueva categoría..." maxlength="30">
           <button class="btn btn-primario btn-sm" onclick="agregarCategoria()">Agregar</button>
         </div>
+        <!-- EL BLOQUE DUPLICADO HA SIDO ELIMINADO -->
       </div>
 
       <div class="config-section modo-hogar-only">
@@ -545,7 +538,7 @@
 <script src="js/inventory.js"></script>
 <script src="js/sales.js"></script>
 <script src="js/reports.js"></script>
-<script src="js/app.js"></script>
 <script src="js/config.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

@@ -831,6 +831,99 @@ input:checked + .toggle-slider::before { transform: translateX(20px); }
   font-weight: 500;
 }
 
+.inventario-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  padding: 18px;
+}
+
+.inventario-card {
+  background: var(--blanco);
+  border-radius: var(--radio-grande);
+  padding: 18px;
+  box-shadow: var(--sombra);
+  border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.inventario-card:hover {
+  border-color: var(--verde-claro);
+  transform: translateY(-2px);
+  box-shadow: var(--sombra-grande);
+}
+
+.inventario-card.agotado-card {
+  opacity: 0.82;
+  border-color: var(--crema-oscura);
+}
+
+.inventario-card-img,
+.inventario-card-noimg {
+  width: calc(100% + 36px);
+  height: 120px;
+  border-radius: calc(var(--radio-grande) - 2px) calc(var(--radio-grande) - 2px) 0 0;
+  display: block;
+  margin: -18px -18px 0;
+  object-fit: cover;
+  background: var(--crema);
+  color: var(--texto-suave);
+  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inventario-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inventario-card-cat,
+.inventario-card-stock-text,
+.inventario-card-field {
+  font-size: 0.78rem;
+  color: var(--texto-suave);
+  font-weight: 500;
+}
+
+.inventario-card-nombre {
+  font-family: 'Fraunces', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--verde);
+  line-height: 1.3;
+}
+
+.inventario-card-marca {
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+  font-weight: 500;
+}
+
+.inventario-card-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.inventario-card-details span {
+  display: block;
+  line-height: 1.4;
+}
+
+.inventario-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .stock-control {
   display: flex;
   align-items: center;

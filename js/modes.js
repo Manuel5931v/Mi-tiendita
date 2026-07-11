@@ -16,6 +16,7 @@ function seleccionarModo(modo) {
   modoApp = modo;
   localStorage.setItem('tf_modo', modo);
   aplicarModo();
+  mostrarPagina('dashboard');
 }
 
 function aplicarModo() {
