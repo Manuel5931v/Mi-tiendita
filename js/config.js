@@ -86,6 +86,10 @@ function eliminarUbicacion(ubic) {
   renderUbicaciones();
 }
 
+function cambiarModoAplicacion() {
+  mostrarSelectorModo();
+}
+
 // ═══════════════════════════════════════
 //  AUTENTICACIÓN FIREBASE
 // ═══════════════════════════════════════
