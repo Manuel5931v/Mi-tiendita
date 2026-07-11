@@ -1125,7 +1125,7 @@ input:checked + .toggle-slider::before { transform: translateX(20px); }
   color: white; font-size: 0.85rem;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  z-index: 2; transition: background 0.2s;
+  z-index: 10; transition: background 0.2s;
 }
 .foto-quitar:hover { background: var(--rojo); }
 
@@ -1254,3 +1254,35 @@ body[data-modo="negocio"] .modo-negocio-only-flex { display: flex; }
 body[data-modo="hogar"] .modo-hogar-only { display: block; }
 body[data-modo="hogar"] .modo-hogar-only-inline { display: inline; }
 body[data-modo="hogar"] .modo-hogar-only-flex { display: flex; }
+
+/* Login tabs */
+.login-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--crema-oscura);
+  padding-bottom: 10px;
+}
+
+.login-tab {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--texto-suave);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.login-tab:hover {
+  background: var(--crema-oscura);
+}
+
+.login-tab.activo {
+  background: var(--verde);
+  color: var(--crema);
+}

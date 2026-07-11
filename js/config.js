@@ -24,6 +24,9 @@ function renderConfig() {
   if (esModoHogar()) {
     renderUbicaciones();
   }
+  
+  // Inicializar UI de autenticación
+  actualizarUIAuth();
 }
 
 function renderCategorias() {
@@ -81,4 +84,108 @@ function eliminarUbicacion(ubic) {
   config.ubicaciones = config.ubicaciones.filter(u => u !== ubic);
   guardarEnStorage();
   renderUbicaciones();
+}
+
+// ═══════════════════════════════════════
+//  AUTENTICACIÓN FIREBASE
+// ═══════════════════════════════════════
+
+function mostrarModalLogin() {
+  document.getElementById('modalLogin').style.display = 'flex';
+  cambiarTabLogin('login');
+}
+
+function cerrarModalLogin(event) {
+  if (event && event.target !== event.currentTarget) return;
+  document.getElementById('modalLogin').style.display = 'none';
+}
+
+function cambiarTabLogin(tab) {
+  const tabLogin = document.getElementById('tabLogin');
+  const tabRegistro = document.getElementById('tabRegistro');
+  const formLogin = document.getElementById('formLogin');
+  const formRegistro = document.getElementById('formRegistro');
+  
+  if (tab === 'login') {
+    tabLogin.classList.add('activo');
+    tabRegistro.classList.remove('activo');
+    formLogin.style.display = 'block';
+    formRegistro.style.display = 'none';
+  } else {
+    tabLogin.classList.remove('activo');
+    tabRegistro.classList.add('activo');
+    formLogin.style.display = 'none';
+    formRegistro.style.display = 'block';
+  }
+}
+
+function handleLogin(event) {
+  event.preventDefault();
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  
+  if (typeof iniciarSesionConCorreo === 'function') {
+    iniciarSesionConCorreo(email, password)
+      .then(() => {
+        cerrarModalLogin();
+        document.getElementById('loginEmail').value = '';
+        document.getElementById('loginPassword').value = '';
+      })
+      .catch(() => {});
+  } else {
+    toast('Firebase no está configurado', 'error');
+  }
+}
+
+function handleRegistro(event) {
+  event.preventDefault();
+  const email = document.getElementById('regEmail').value;
+  const password = document.getElementById('regPassword').value;
+  const passwordConfirm = document.getElementById('regPasswordConfirm').value;
+  
+  if (password !== passwordConfirm) {
+    toast('Las contraseñas no coinciden', 'error');
+    return;
+  }
+  
+  if (typeof registrarConCorreo === 'function') {
+    registrarConCorreo(email, password)
+      .then(() => {
+        cerrarModalLogin();
+        document.getElementById('regEmail').value = '';
+        document.getElementById('regPassword').value = '';
+        document.getElementById('regPasswordConfirm').value = '';
+      })
+      .catch(() => {});
+  } else {
+    toast('Firebase no está configurado', 'error');
+  }
+}
+
+function mostrarRecuperarPassword(event) {
+  event.preventDefault();
+  const email = prompt('Ingresa tu correo electrónico para restablecer la contraseña:');
+  if (email && email.includes('@')) {
+    if (typeof recuperarContrasena === 'function') {
+      recuperarContrasena(email);
+    } else {
+      toast('Firebase no está configurado', 'error');
+    }
+  } else if (email) {
+    toast('Correo inválido', 'error');
+  }
+}
+
+// Actualizar UI de autenticación
+function actualizarUIAuth() {
+  const authButtons = document.getElementById('authButtons');
+  const logoutButton = document.getElementById('logoutButton');
+  
+  if (typeof uidActual !== 'undefined' && uidActual) {
+    authButtons.style.display = 'none';
+    logoutButton.style.display = 'flex';
+  } else {
+    authButtons.style.display = 'flex';
+    logoutButton.style.display = 'none';
+  }
 }

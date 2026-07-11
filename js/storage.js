@@ -16,6 +16,11 @@ function guardarEnStorage() {
   localStorage.setItem('tf_productos', JSON.stringify(productos));
   localStorage.setItem('tf_config', JSON.stringify(config));
   localStorage.setItem('tf_modo', modoApp);
+  
+  // Sincronizar con Firebase si está habilitado
+  if (typeof guardarEnFirebase === 'function') {
+    guardarEnFirebase();
+  }
 }
 
 function cargarDeStorage() {
@@ -41,6 +46,11 @@ function cargarHistorialDeStorage() {
 function guardarHistorial() {
   const hoy = new Date().toISOString().slice(0, 10);
   localStorage.setItem('tf_historial_' + hoy, JSON.stringify(historialDia));
+  
+  // Sincronizar con Firebase si está habilitado
+  if (typeof guardarHistorialEnFirebase === 'function') {
+    guardarHistorialEnFirebase();
+  }
 }
 
 function exportarDatos() {

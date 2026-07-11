@@ -5,6 +5,7 @@
 let filtroActual = { buscar: '', categoria: '', stock: '', ubicacion: '' };
 let idEliminar = null;
 let fotoBase64Actual = null;
+let fotoEliminada = false;
 
 function filtrarProductos() {
   filtroActual.buscar = document.getElementById('buscarInput').value.toLowerCase();
@@ -155,6 +156,7 @@ function renderTabla() {
 
 function aplicarFotoEnZona(base64) {
   fotoBase64Actual = base64 || null;
+  fotoEliminada = (base64 === null); // Marcar como eliminada si se pasa null
   const zona = document.getElementById('fotoZona');
   if (!zona) return;
 
@@ -258,6 +260,7 @@ function abrirModalProducto(id = null) {
       document.getElementById('fpFechaCompra').value = p.fechaCompra || '';
     }
     // Cargar foto si existe
+    fotoEliminada = false;
     aplicarFotoEnZona(p.foto || null);
   } else {
     document.getElementById('formProducto').reset();
@@ -265,6 +268,7 @@ function abrirModalProducto(id = null) {
     if (esModoNegocio()) {
       document.getElementById('fpFechaAbastecimiento').value = new Date().toISOString().slice(0,10);
     }
+    fotoEliminada = false;
     aplicarFotoEnZona(null);
   }
 
@@ -299,7 +303,7 @@ function guardarProducto(e) {
     ubicacion: esModoHogar() ? (document.getElementById('fpUbicacion').value || null) : null,
     fechaCompra: esModoHogar() ? (document.getElementById('fpFechaCompra').value || null) : null,
     notas: document.getElementById('fpNotas').value.trim() || null,
-    foto: fotoBase64Actual || (id ? (productos.find(p=>p.id===id)||{}).foto || null : null),
+    foto: fotoEliminada ? null : (fotoBase64Actual || (id ? (productos.find(p=>p.id===id)||{}).foto || null : null)),
     updatedAt: new Date().toISOString()
   };
 

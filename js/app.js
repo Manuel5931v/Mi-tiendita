@@ -22,18 +22,23 @@ function cargarDemoSiVacio() {
 
 // ─── INICIALIZACIÓN ────────────────────────────────
 
-cargarDeStorage();
-cargarHistorialDeStorage();
-cargarDemoSiVacio();
-
-// Inicializar modo
-if (modoApp) {
-  aplicarModo();
+// Usar iniciarApp() de Firebase si está disponible, sino usar el método tradicional
+if (typeof iniciarApp === 'function') {
+  iniciarApp();
 } else {
-  mostrarSelectorModo();
-}
+  cargarDeStorage();
+  cargarHistorialDeStorage();
+  cargarDemoSiVacio();
 
-if (modoApp) renderDashboard();
+  // Inicializar modo
+  if (modoApp) {
+    aplicarModo();
+  } else {
+    mostrarSelectorModo();
+  }
+
+  if (modoApp) renderDashboard();
+}
 
 // ─── EVENT LISTENERS ────────────────────────────────
 
