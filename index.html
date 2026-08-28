@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#2D5016">
+<meta name="description" content="Mi Tiendita - Control de inventario para pequeños emprendimientos">
+<title>Mi-Tiendita 🛒</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<!-- PANTALLA DE SELECCIÓN DE MODO -->
+<div class="modo-selector" id="modoSelector">
+  <div class="modo-selector-content">
+    <h1>¿Qué tipo de inventario deseas administrar?</h1>
+    <p>Selecciona el modo que mejor se adapte a tus necesidades</p>
+    
+    <div class="modo-cards">
+      <div class="modo-card" onclick="seleccionarModo('negocio')">
+        <span class="modo-card-icon">🏪</span>
+        <h2>Inventario para Negocio</h2>
+        <p>Ideal para tiendas, emprendimientos y negocios. Incluye ventas, reportes financieros, precios y control completo del inventario.</p>
+        <button class="modo-card-btn negocio">Usar modo Negocio</button>
+      </div>
+      
+      <div class="modo-card" onclick="seleccionarModo('bodega')">
+        <span class="modo-card-icon">🏭</span>
+        <h2>Inventario de Bodega</h2>
+        <p>Ideal para el almacén o bodega donde te abasteces: controla existencias, vencimientos y qué tienes disponible para surtir tu tienda.</p>
+        <button class="modo-card-btn bodega">Usar modo Bodega</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="logo" id="appLogo">🛒 Mi<span>Tiendita</span></div>
+    <nav id="navPrincipal">
+      <button class="activo" onclick="mostrarPagina('dashboard', this)">🏠 Inicio</button>
+      <button onclick="mostrarPagina('inventario', this)">📦 Inventario</button>
+      <button class="modo-negocio-only" onclick="mostrarPagina('ventas', this)">🛒 Ventas</button>
+      <button class="modo-negocio-only" onclick="mostrarPagina('reportes', this)">📊 Reportes</button>
+      <button onclick="mostrarPagina('asistente', this)">🤖 Asistente IA</button>
+      <button onclick="mostrarPagina('config', this)">⚙️ Config</button>
+    </nav>
+  </div>
+</header>
+
+<!-- CONTENIDO PRINCIPAL -->
+<main>
+
+  <!-- ═══════════════════ DASHBOARD ═══════════════════ -->
+  <div class="pagina activa" id="pg-dashboard">
+    <div class="bienvenida fade-in">
+      <h1>¡Bienvenida/o! 👋</h1>
+      <p>Aquí tienes el resumen de tu tienda de hoy, <span id="fechaHoy"></span>.</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <!-- Alertas -->
+    <div class="alertas-section" id="alertasSection"></div>
+
+    <!-- Dashboard cards -->
+    <div class="dashboard-grid">
+      <div class="card fade-in">
+        <div class="card-titulo">🏷️ Productos por categoría</div>
+        <div id="dashCategorias"></div>
+      </div>
+      <div class="card fade-in">
+        <div class="card-titulo">⚠️ Próximos a vencer (30 días)</div>
+        <div id="dashVencimientos"></div>
+      </div>
+      <div class="card fade-in">
+        <div class="card-titulo">🔮 Predicción de agotamiento (IA)</div>
+        <div id="dashPrediccionIA"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ INVENTARIO ═══════════════════ -->
+  <div class="pagina" id="pg-inventario">
+    <div class="toolbar">
+      <div class="buscador">
+        <span>🔍</span>
+        <input type="text" id="buscarInput" placeholder="Buscar producto..." oninput="filtrarProductos()">
+      </div>
+      <select class="filtro-select" id="filtroCategoria" onchange="filtrarProductos()">
+        <option value="">Todas las categorías</option>
+      </select>
+      <select class="filtro-select modo-bodega-only" id="filtroUbicacion" onchange="filtrarProductos()">
+        <option value="">Todas las ubicaciones</option>
+      </select>
+      <select class="filtro-select" id="filtroStock" onchange="filtrarProductos()">
+        <option value="">Todo el stock</option>
+        <option value="ok">Stock OK</option>
+        <option value="bajo">Stock bajo</option>
+        <option value="agotado">Agotado</option>
+        <option value="vencido">Vencidos</option>
+        <option value="proximo">Por vencer</option>
+      </select>
+      <button class="btn btn-secundario" onclick="limpiarFiltros()">🧹 Limpiar filtros</button>
+      <button class="btn btn-secundario" onclick="abrirModalPedidos()">📦 Pedidos<span class="pedidos-badge" id="pedidosBadge" style="display:none"></span></button>
+      <button class="btn btn-primario" onclick="abrirModalProducto()">➕ Agregar</button>
+    </div>
+
+    <div class="card" style="padding: 0;">
+      <div id="inventarioGrid" class="inventario-grid"></div>
+      <div id="sinProductos" class="sin-productos" style="display:none;">
+        <span class="icono-grande">📦</span>
+        <p>No hay productos. ¡Agrega el primero!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ VENTAS RÁPIDAS ═══════════════════ -->
+  <div class="pagina" id="pg-ventas">
+
+    <div class="ventas-header">
+      <div class="ventas-titulo">
+        <h1>🛒 Ventas Rápidas</h1>
+        <p>Toca un producto para venderlo o abastecerlo al instante.</p>
+      </div>
+      <div class="ventas-acciones">
+        <button class="btn btn-peligro btn-sm" onclick="limpiarHistorialDia()">🗑️ Limpiar historial</button>
+      </div>
+    </div>
+
+    <!-- Toolbar: búsqueda + modo -->
+    <div class="ventas-toolbar">
+      <div class="buscador" style="max-width:280px">
+        <span>🔍</span>
+        <input type="text" id="ventasBuscar" placeholder="Buscar producto..." oninput="renderVentas()">
+      </div>
+      <select class="filtro-select" id="ventasCategoria" onchange="renderVentas()">
+        <option value="">Todas las categorías</option>
+      </select>
+      <div class="modo-tab">
+        <button class="modo-tab-btn activo" id="modoVender" onclick="cambiarModoVentas('vender')">➖ Vender</button>
+        <button class="modo-tab-btn" id="modoAbastecer" onclick="cambiarModoVentas('abastecer')">➕ Abastecer</button>
+      </div>
+    </div>
+
+    <!-- Grid de tarjetas -->
+    <div class="ventas-grid" id="ventasGrid"></div>
+
+    <!-- Historial del día -->
+    <div class="card fade-in">
+      <div class="historial-header">
+        <div class="card-titulo" style="margin-bottom:0">📋 Historial del día</div>
+      </div>
+      <!-- Resumen -->
+      <div class="resumen-dia" id="resumenDia"></div>
+      <!-- Lista -->
+      <div class="historial-lista" id="historialLista">
+        <div class="sin-historial">Aún no hay movimientos hoy. ¡Empieza a registrar tus ventas!</div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="pagina" id="pg-reportes">
+    <div class="ventas-header">
+      <div class="ventas-titulo">
+        <h1>📊 Reportes</h1>
+        <p>Resumen del valor del inventario, stock bajo, vencimientos y categorías.</p>
+      </div>
+      <div class="ventas-acciones">
+        <button class="btn btn-primario" onclick="descargarReportePDF()">⬇️ Descargar PDF del día</button>
+      </div>
+    </div>
+    <div class="reporte-grid">
+      <div class="card fade-in">
+        <div class="card-titulo">💰 Valor del inventario</div>
+        <div id="reporteValor"></div>
+      </div>
+      <div class="card fade-in">
+        <div class="card-titulo">📉 Productos con stock bajo</div>
+        <div id="reporteBajoStock"></div>
+      </div>
+      <div class="card fade-in">
+        <div class="card-titulo">🗓️ Productos vencidos</div>
+        <div id="reporteVencidos"></div>
+      </div>
+      <div class="card fade-in">
+        <div class="card-titulo">📦 Resumen por categoría</div>
+        <div id="reporteCategorias"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ ASISTENTE IA ═══════════════════ -->
+  <div class="pagina" id="pg-asistente">
+    <div class="bienvenida fade-in">
+      <h1>🤖 Asistente IA</h1>
+      <p>La IA analiza tu historial de compras y consumo para sugerirte cuándo reabastecer y qué usar primero antes de que se venza.</p>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="card fade-in">
+        <div class="card-titulo">🔮 Predicción de agotamiento</div>
+        <p style="color:var(--texto-suave); font-size:0.85rem; margin-bottom:10px;">
+          Calculada localmente con tu ritmo real de ventas/consumo registrado.
+        </p>
+        <div id="asistentePrediccion"></div>
+      </div>
+
+      <div class="card fade-in">
+        <div class="card-titulo">✨ Sugerencias de reabastecimiento</div>
+        <p style="color:var(--texto-suave); font-size:0.85rem; margin-bottom:10px;">
+          Generadas con la IA a partir del resumen de tu historial.
+        </p>
+        <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+          <button class="btn btn-primario" id="btnGenerarSugerenciaIA" onclick="obtenerSugerenciaIA()">✨ Generar sugerencia</button>
+          <button class="btn btn-secundario btn-sm" onclick="borrarSugerenciasIA()">🗑️ Borrar historial</button>
+        </div>
+        <div id="sugerenciasIALista"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ CONFIGURACIÓN ═══════════════════ -->
+  <div class="pagina" id="pg-config">
+    <div class="card fade-in">
+      <div class="config-section">
+        <div class="config-titulo">🔄 Modo de Aplicación</div>
+        <div class="config-fila">
+          <div class="config-info">
+            <strong>Cambiar modo</strong>
+            <span>Vuelve a seleccionar el tipo de inventario</span>
+          </div>
+          <button class="btn btn-secundario btn-sm" onclick="cambiarModoAplicacion()">🔄 Cambiar modo</button>
+        </div>
+      </div>
+
+      <div class="config-section modo-negocio-only">
+        <div class="config-titulo">🏪 Mi Tienda</div>
+        <div class="config-fila">
+          <div class="config-info">
+            <strong>Nombre de la tienda</strong>
+            <span>Se muestra en los reportes</span>
+          </div>
+          <input type="text" id="configNombreTienda"
+            style="max-width:220px; padding: 8px 12px;"
+            onchange="guardarConfig()">
+        </div>
+        <div class="config-fila">
+          <div class="config-info">
+            <strong>Moneda</strong>
+            <span>Símbolo para mostrar precios</span>
+          </div>
+          <select id="configMoneda" style="max-width:140px; padding:8px 12px;" onchange="guardarConfig()">
+            <option value="$">$ (Dólar)</option>
+            <option value="Q">Q (Quetzal)</option>
+            <option value="C$">C$ (Córdoba)</option>
+            <option value="L">L (Lempira)</option>
+            <option value="₡">₡ (Colón)</option>
+            <option value="₡">₡ (Colón SV)</option>
+          </select>
+        </div>
+        <div class="config-fila">
+          <div class="config-info">
+            <strong>Umbral de stock bajo</strong>
+            <span>Cantidad mínima antes de alertar</span>
+          </div>
+          <input type="number" id="configUmbral" min="1" max="100"
+            style="max-width:100px; padding:8px 12px;"
+            onchange="guardarConfig()">
+        </div>
+        <div class="config-fila">
+          <div class="config-info">
+            <strong>Días de aviso de vencimiento</strong>
+            <span>Alertar cuántos días antes del vencimiento</span>
+          </div>
+          <input type="number" id="configDiasAviso" min="1" max="90"
+            style="max-width:100px; padding:8px 12px;"
+            onchange="guardarConfig()">
+        </div>
+      </div>
+
+      <div class="config-section modo-bodega-only">
+        <div class="config-titulo">⏰ Alertas</div>
+        <div class="config-fila">
+          <div class="config-info">
+            <strong>Días de aviso de vencimiento</strong>
+            <span>Alertar cuántos días antes del vencimiento</span>
+          </div>
+          <input type="number" id="configDiasAviso" min="1" max="90"
+            style="max-width:100px; padding:8px 12px;"
+            onchange="guardarConfig()">
+        </div>
+      </div>
+
+      <div class="config-section">
+        <div class="config-titulo">🏷️ Categorías de productos</div>
+        <div class="lista-categorias" id="listaCategorias"></div>
+        <div class="add-cat-form">
+          <input type="text" id="nuevaCatInput" placeholder="Nueva categoría..." maxlength="30">
+          <button class="btn btn-primario btn-sm" onclick="agregarCategoria()">Agregar</button>
+        </div>
+        
+      </div>
+
+      <div class="config-section modo-bodega-only">
+        <div class="config-titulo">📍 Ubicaciones</div>
+        <div class="lista-categorias" id="listaUbicaciones"></div>
+        <div class="add-cat-form">
+          <input type="text" id="nuevaUbicInput" placeholder="Nueva ubicación..." maxlength="30">
+          <button class="btn btn-primario btn-sm" onclick="agregarUbicacion()">Agregar</button>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <div class="config-titulo">☁️ Sincronización con la nube</div>
+        <div class="config-fila">
+          <div class="config-info">
+            <strong>Estado de cuenta</strong>
+            <span id="estadoCuenta">No has iniciado sesión (modo local)</span>
+          </div>
+        </div>
+        <p class="pago-aviso" id="syncPagoAviso" style="display:none;">
+          🔒 La sincronización con la nube es una función de pago. Activa tu membresía para sincronizar tus datos entre dispositivos.
+        </p>
+        <div class="config-fila" id="authButtons">
+          <div class="config-info">
+            <strong>Iniciar sesión</strong>
+            <span>Sincroniza tus datos en la nube (requiere membresía activa)</span>
+          </div>
+          <button class="btn btn-primario btn-sm" onclick="iniciarSesionConGoogle()">🔵 Iniciar sesión con Google</button>
+        </div>
+        <div class="config-fila" id="logoutButton" style="display:none;">
+          <div class="config-info">
+            <strong>Cerrar sesión</strong>
+            <span>Vuelve a trabajar en modo local</span>
+          </div>
+          <button class="btn btn-peligro btn-sm" onclick="cerrarSesion()">🚪 Cerrar sesión</button>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <div class="config-titulo">🗃️ Datos</div>
+        <div class="config-fila">
+          <div class="config-info">
+            <strong>Exportar datos</strong>
+            <span>Descarga todos tus productos en formato JSON</span>
+          </div>
+          <button class="btn btn-secundario btn-sm" onclick="exportarDatos()">⬇️ Exportar</button>
+        </div>
+        <div class="config-fila">
+          <div class="config-info">
+            <strong>Importar datos</strong>
+            <span>Carga un archivo de respaldo previo</span>
+          </div>
+          <label class="btn btn-secundario btn-sm" style="cursor:pointer;">
+            ⬆️ Importar
+            <input type="file" accept=".json" style="display:none" onchange="importarDatos(event)">
+          </label>
+        </div>
+        <div class="config-fila">
+          <div class="config-info">
+            <strong>Borrar todos los datos</strong>
+            <span style="color:var(--rojo)">Esta acción no se puede deshacer</span>
+          </div>
+          <button class="btn btn-peligro btn-sm" onclick="borrarTodo()">🗑️ Borrar todo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- NAV BOTTOM MÓVIL -->
+<div class="nav-bottom">
+  <div class="nav-bottom-inner">
+    <button class="nav-bottom-btn activo" onclick="mostrarPagina('dashboard', this)" id="nb-dashboard">
+      <span class="nav-icon">🏠</span>Inicio
+    </button>
+    <button class="nav-bottom-btn" onclick="mostrarPagina('inventario', this)" id="nb-inventario">
+      <span class="nav-icon">📦</span>Inventario
+    </button>
+    <button class="nav-bottom-btn modo-negocio-only" onclick="mostrarPagina('ventas', this)" id="nb-ventas">
+      <span class="nav-icon">🛒</span>Ventas
+    </button>
+    <button class="nav-bottom-btn modo-negocio-only" onclick="mostrarPagina('reportes', this)" id="nb-reportes">
+      <span class="nav-icon">📊</span>Reportes
+    </button>
+    <button class="nav-bottom-btn" onclick="mostrarPagina('asistente', this)" id="nb-asistente">
+      <span class="nav-icon">🤖</span>IA
+    </button>
+    <button class="nav-bottom-btn" onclick="mostrarPagina('config', this)" id="nb-config">
+      <span class="nav-icon">⚙️</span>Config
+    </button>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- MODAL AGREGAR/EDITAR PRODUCTO -->
+<div class="modal-overlay" id="modalOverlay" onclick="cerrarModalSiOverlay(event)">
+  <div class="modal">
+    <div class="modal-titulo">
+      <span id="modalTitulo">Agregar Producto</span>
+      <button class="modal-cerrar" onclick="cerrarModal()">✕</button>
+    </div>
+    <form id="formProducto" onsubmit="guardarProducto(event)">
+      <input type="hidden" id="productoId">
+      <div class="form-grid">
+        <div class="form-grupo completo">
+          <label>Nombre del producto *</label>
+          <input type="text" id="fpNombre" placeholder="Ej: Frijoles negros 1lb" required maxlength="80">
+        </div>
+        <div class="form-grupo">
+          <label>Marca</label>
+          <input type="text" id="fpMarca" placeholder="Ej: Nestlé, Maggi, Diana..." maxlength="50">
+        </div>
+        <div class="form-grupo">
+          <label>Categoría</label>
+          <select id="fpCategoria">
+            <option value="General">General</option>
+          </select>
+        </div>
+        <div class="form-grupo modo-bodega-only">
+          <label>Ubicación</label>
+          <select id="fpUbicacion">
+            <option value="">Sin ubicación</option>
+          </select>
+        </div>
+        <div class="form-grupo">
+          <label>Unidad de medida</label>
+          <select id="fpUnidad">
+            <option value="unidad">Unidad</option>
+            <option value="libra">Libra</option>
+            <option value="kg">Kilogramo</option>
+            <option value="litro">Litro</option>
+            <option value="ml">Mililitro</option>
+            <option value="docena">Docena</option>
+            <option value="caja">Caja</option>
+            <option value="bolsa">Bolsa</option>
+            <option value="paquete">Paquete</option>
+            <option value="botellas">Botellas</option>
+            <option value="latas">Latas</option>
+            <option value="rollos">Rollos</option>
+          </select>
+        </div>
+        <div class="form-grupo modo-negocio-only">
+          <label>Precio de venta *</label>
+          <input type="number" id="fpPrecioVenta" placeholder="0.00" step="0.01" min="0" required>
+        </div>
+        <div class="form-grupo modo-negocio-only">
+          <label>Precio de costo</label>
+          <input type="number" id="fpPrecioCosto" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="form-grupo">
+          <label>Cantidad en stock *</label>
+          <input type="number" id="fpStock" placeholder="0" min="0" required>
+        </div>
+        <div class="form-grupo modo-negocio-only">
+          <label>Stock mínimo (alerta)</label>
+          <input type="number" id="fpStockMin" placeholder="5" min="0">
+        </div>
+        <div class="form-grupo">
+          <label>Fecha de vencimiento</label>
+          <input type="date" id="fpFechaVencimiento">
+        </div>
+        <div class="form-grupo modo-bodega-only">
+          <label>Fecha de compra</label>
+          <input type="date" id="fpFechaCompra">
+        </div>
+        <div class="form-grupo modo-negocio-only">
+          <label>Último abastecimiento</label>
+          <input type="date" id="fpFechaAbastecimiento">
+        </div>
+        <div class="form-grupo modo-negocio-only">
+          <label>Próx. abastecimiento</label>
+          <input type="date" id="fpProxAbastecimiento">
+        </div>
+        <div class="form-grupo modo-negocio-only">
+          <label>Proveedor</label>
+          <input type="text" id="fpProveedor" placeholder="Nombre del proveedor" maxlength="60">
+        </div>
+        <div class="form-grupo completo">
+          <label>Foto del producto (opcional)</label>
+          <div class="foto-upload-zona" id="fotoZona">
+            <input type="file" id="fpFoto" accept="image/*" onchange="previsualizarFoto(event)">
+            <span class="foto-placeholder-icon">📷</span>
+            <span class="foto-placeholder-txt">Toca para subir una foto.<br><small>JPG, PNG, WEBP · Máx. 2 MB</small></span>
+          </div>
+        </div>
+        <div class="form-grupo completo">
+          <label>Notas / Descripción</label>
+          <textarea id="fpNotas" placeholder="Información adicional del producto..."></textarea>
+        </div>
+      </div>
+      <div class="form-acciones">
+        <button type="button" class="btn btn-secundario" onclick="cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primario">💾 Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAR ELIMINACIÓN -->
+<div class="modal-overlay" id="modalConfirm" onclick="cerrarConfirm(event)">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-titulo">
+      <span>⚠️ Confirmar eliminación</span>
+      <button class="modal-cerrar" onclick="cerrarConfirm()">✕</button>
+    </div>
+    <p style="color:var(--texto-suave); font-size:0.93rem; margin-bottom:20px;">
+      ¿Estás seguro/a de que deseas eliminar el producto <strong id="confirmNombre"></strong>? Esta acción no se puede deshacer.
+    </p>
+    <div class="form-acciones">
+      <button class="btn btn-secundario" onclick="cerrarConfirm()">Cancelar</button>
+      <button class="btn btn-peligro" onclick="confirmarEliminar()">🗑️ Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PEDIDOS -->
+<div class="modal-overlay" id="modalPedidos" onclick="cerrarModalPedidos(event)">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-titulo">
+      <span>📦 Pedidos</span>
+      <button class="modal-cerrar" onclick="cerrarModalPedidos()">✕</button>
+    </div>
+    <div id="pedidosVista"></div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="js/firebase.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/modes.js"></script>
+<script src="js/navigation.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/inventory.js"></script>
+<script src="js/pedidos.js"></script>
+<script src="js/sales.js"></script>
+<script src="js/reports.js"></script>
+<script src="js/ai.js"></script>
+<script type="module" src="js/ai-firebase-bridge.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>?v=2
+</body>
+</html>
