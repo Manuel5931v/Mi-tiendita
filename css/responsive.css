@@ -1,137 +1,82 @@
-/* responsive.css - Versión ajustada para PC y móvil */
+/* responsive.css — Gratuita Craft · adapta header editorial, toolbar, cards */
 
-@media(max-width: 650px) {
-  nav { display: none; }
-  .nav-bottom { display: block; }
-  main { padding-bottom: 90px; }
-
-  /* Ajustes para el selector de modo en móvil */
-  .modo-selector {
-    padding: 12px;
-    align-items: flex-start;
-    padding-top: 40px;
-  }
-
-  .modo-selector-content {
-    max-width: 100%;
-    padding: 0 4px;
-  }
-
-  .modo-selector h1 {
-    font-size: 1.5rem;
-    margin-bottom: 8px;
-  }
-
-  .modo-selector p {
-    font-size: 0.9rem;
-    margin-bottom: 24px;
-  }
-
-  .modo-cards {
-    gap: 16px;
-  }
-
-  .modo-card {
-    padding: 20px 16px;
-  }
-
-  .modo-card-icon {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
-  }
-
-  .modo-card h2 {
-    font-size: 1.2rem;
-    margin-bottom: 8px;
-  }
-
-  .modo-card p {
-    font-size: 0.85rem;
-    margin-bottom: 14px;
-  }
-
-  .modo-card-btn {
-    padding: 10px 16px;
-    font-size: 0.9rem;
-  }
+@media(max-width: 700px){
+  nav{display:none}
+  .nav-bottom{display:block}
+  main{padding-bottom:90px}
+  .header-inner{padding:10px 16px; gap:12px}
+  .font-controls{display:flex}
 }
 
-@media(max-width: 480px) {
-  .ventas-grid { grid-template-columns: repeat(2, 1fr); }
-  .resumen-dia { grid-template-columns: repeat(3, 1fr); }
+@media(max-width: 650px){
+  .modo-selector{padding:12px; align-items:flex-start; padding-top:32px}
+  .modo-selector-content{max-width:100%; padding:0 2px}
+  .modo-selector h1{font-size:1.5rem; margin-bottom:6px}
+  .modo-selector-content > p{font-size:.9rem; margin-bottom:18px}
+  .modo-cards{gap:12px}
+  .modo-card{padding:18px 16px}
+  .modo-card h2{font-size:1.15rem}
+  .modo-card p{font-size:.84rem; margin-bottom:12px}
 
-  .modo-selector h1 {
-    font-size: 1.3rem;
-  }
-
-  .modo-card {
-    padding: 16px 12px;
-  }
-
-  .modo-card-icon {
-    font-size: 2rem;
-  }
-
-  .modo-card h2 {
-    font-size: 1rem;
-  }
-
-  .modo-card p {
-    font-size: 0.8rem;
-  }
+  .modal{max-height:85vh; padding:18px 16px 20px; border-radius:var(--r-md)}
+  .modal-overlay{padding-bottom:70px; align-items:flex-end}
+  .form-grid{grid-template-columns:1fr}
+  .toolbar{gap:8px; padding:8px}
+  .toolbar .btn{flex:1 1 auto; min-height:40px; justify-content:center}
+  .buscador{min-width:100%}
+  .pedidos-toolbar{flex-wrap:wrap}
+  .pedidos-toolbar .buscador{flex:1 1 100%; min-width:100%}
+  .pedidos-nuevo-grid{max-height:50vh}
+  .pedido-prod{flex-direction:column; align-items:stretch; gap:10px}
+  .pedido-prod-info{width:100%}
+  .stock-control{width:100%; justify-content:center}
+  .sc-btn{width:44px; height:44px; font-size:1.4rem}
+  .sc-cantidad{font-size:1.1rem}
+  .pedido-acciones .btn{min-height:40px; flex:1; justify-content:center}
+  .pedidos-acciones-top .btn{min-height:40px}
+  .inventario-grid{grid-template-columns:1fr; padding:10px; gap:12px}
+  .toast-container{bottom:80px; right:12px; left:12px; max-width:none}
+  .config-fila{flex-direction:column; align-items:stretch}
+  .config-fila input,.config-fila select{max-width:100% !important}
+  .ventas-toolbar{flex-direction:column; align-items:stretch}
+  .ventas-toolbar .buscador{max-width:none !important}
+  .modo-tab{width:100%; justify-content:center}
+  .ventas-grid{grid-template-columns:repeat(2,1fr)}
 }
 
-/* Ajustes para pantallas grandes (PC) - selector más compacto */
-@media(min-width: 701px) {
-  .modo-selector-content {
-    max-width: 750px;
-  }
-
-  .modo-card {
-    padding: 28px 24px;
-  }
-
-  .modo-selector h1 {
-    font-size: 1.9rem;
-  }
-
-  .modo-selector p {
-    font-size: 1rem;
-    margin-bottom: 32px;
-  }
-
-  .modo-card-icon {
-    font-size: 3rem;
-    margin-bottom: 12px;
-  }
-
-  .modo-card h2 {
-    font-size: 1.3rem;
-  }
-
-  .modo-card p {
-    font-size: 0.9rem;
-  }
-
-  .modo-card-btn {
-    padding: 12px 20px;
-    font-size: 0.95rem;
-  }
+@media(max-width:480px){
+  .ventas-grid{grid-template-columns:repeat(2,1fr); gap:10px}
+  .resumen-dia{grid-template-columns:repeat(3,1fr); gap:8px}
+  .modo-selector h1{font-size:1.3rem}
+  .modo-card{padding:16px 12px}
+  .modo-card h2{font-size:1.05rem}
+  .modo-card p{font-size:.82rem}
+  .stats-grid{gap:8px}
+  .stat-numero{font-size:1.55rem}
 }
 
-/* Los demás estilos responsivos que ya tenías */
-@media(min-width: 600px) {
-  .stats-grid { grid-template-columns: repeat(4, 1fr); }
-  .modal-overlay { align-items: center; padding: 20px; }
-  .modal {
-    border-radius: var(--radio-grande);
-    transform: scale(0.95);
-  }
-  .modal-overlay.visible .modal { transform: scale(1); }
+@media(min-width:600px){
+  .stats-grid{grid-template-columns:repeat(4,1fr)}
+  .modal-overlay{align-items:center; padding:20px}
+  .modal{transform:translateY(4px)}
+  .modal-overlay.visible .modal{transform:translateY(0)}
 }
 
-@media(min-width: 700px) {
-  .dashboard-grid { grid-template-columns: 1fr 1fr; }
-  .reporte-grid { grid-template-columns: 1fr 1fr; }
-  .modo-cards { grid-template-columns: 1fr 1fr; }
+@media(min-width:700px){
+  .dashboard-grid{grid-template-columns:1fr 1fr}
+  .reporte-grid{grid-template-columns:1fr 1fr}
+  .modo-cards{grid-template-columns:1fr 1fr}
+  .ventas-grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+}
+
+@media(min-width:701px){
+  .modo-selector-content{max-width:760px}
+  .modo-card{padding:22px 20px}
+  .modo-selector h1{font-size:1.9rem}
+  .modo-selector-content > p{font-size:.95rem}
+}
+@media(max-width:380px){
+  .pedidos-acciones-top{flex-direction:column; align-items:stretch}
+  .nav-bottom-inner{gap:0}
+  .nav-bottom-btn{font-size:.6rem; padding:2px 0}
 }
