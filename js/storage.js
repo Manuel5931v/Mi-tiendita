@@ -8,8 +8,7 @@ let config = {
   moneda: '$',
   umbralStock: 5,
   diasAviso: 15,
-  categorias: ['Alimentos', 'Bebidas', 'Limpieza', 'Cuidado personal', 'Papelería', 'Otros'],
-  ubicaciones: ['Despensa', 'Refrigerador', 'Congelador', 'Baño', 'Lavandería', 'Dormitorio', 'Garaje', 'Otro']
+  categorias: ['Alimentos', 'Bebidas', 'Limpieza', 'Cuidado personal', 'Papelería', 'Otros']
 };
 
 function claveModo() {
@@ -62,7 +61,7 @@ function cargarHistorialDeStorage() {
     else historialDia = [];
   } catch(e) { historialDia = []; }
 }
-1
+
 function guardarHistorial() {
   const hoy = new Date().toISOString().slice(0, 10);
   localStorage.setItem('tf_historial_' + claveModo() + '_' + hoy, JSON.stringify(historialDia));

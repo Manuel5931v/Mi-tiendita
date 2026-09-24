@@ -2,7 +2,7 @@
 //  INVENTARIO / TABLA
 // ═══════════════════════════════════════
 
-let filtroActual = { buscar: '', categoria: '', stock: '', ubicacion: '' };
+let filtroActual = { buscar: '', categoria: '', stock: '' };
 let idEliminar = null;
 let fotoBase64Actual = null;
 let fotoEliminada = false;
@@ -11,9 +11,6 @@ function filtrarProductos() {
   filtroActual.buscar = document.getElementById('buscarInput').value.toLowerCase();
   filtroActual.categoria = document.getElementById('filtroCategoria').value;
   filtroActual.stock = document.getElementById('filtroStock').value;
-  if (esModoBodega()) {
-    filtroActual.ubicacion = document.getElementById('filtroUbicacion').value;
-  }
   renderTabla();
 }
 
@@ -21,35 +18,23 @@ function limpiarFiltros() {
   filtroActual.buscar = '';
   filtroActual.categoria = '';
   filtroActual.stock = '';
-  if (esModoBodega()) filtroActual.ubicacion = '';
   const buscar = document.getElementById('buscarInput');
   if (buscar) buscar.value = '';
   const cat = document.getElementById('filtroCategoria');
   if (cat) cat.value = '';
   const stock = document.getElementById('filtroStock');
   if (stock) stock.value = '';
-  if (esModoBodega()) {
-    const ubic = document.getElementById('filtroUbicacion');
-    if (ubic) ubic.value = '';
-  }
   renderTabla();
 }
 
 function renderTabla() {
   // Actualizar opciones de categoría
   const sel = document.getElementById('filtroCategoria');
-  const valActual = sel.value;
-  sel.innerHTML = '<option value="">Todas las categorías</option>' +
-    config.categorias.map(c => `<option value="${c}">${c}</option>`).join('');
-  sel.value = valActual;
-
-  // Actualizar opciones de ubicación (solo modo bodega)
-  if (esModoBodega()) {
-    const selUbic = document.getElementById('filtroUbicacion');
-    const valUbic = selUbic.value;
-    selUbic.innerHTML = '<option value="">Todas las ubicaciones</option>' +
-      (config.ubicaciones || []).map(u => `<option value="${u}">${u}</option>`).join('');
-    selUbic.value = valUbic;
+  if (sel) {
+    const valActual = sel.value;
+    sel.innerHTML = '<option value="">Todas las categorías</option>' +
+      config.categorias.map(c => `<option value="${c}">${c}</option>`).join('');
+    sel.value = valActual;
   }
 
   let pFiltrados = productos.filter(p => {
@@ -68,8 +53,7 @@ function renderTabla() {
     } else {
       matchStock = !filtroActual.stock || cs === filtroActual.stock;
     }
-    const matchUbic = !esModoBodega() || !filtroActual.ubicacion || p.ubicacion === filtroActual.ubicacion;
-    return matchBuscar && matchCat && matchStock && matchUbic;
+    return matchBuscar && matchCat && matchStock;
   });
 
   const grid = document.getElementById('inventarioGrid');
@@ -109,11 +93,10 @@ function renderTabla() {
 
 function aplicarFotoEnZona(base64) {
   fotoBase64Actual = base64 || null;
-  fotoEliminada = (base64 === null); // Marcar como eliminada si se pasa null
+  fotoEliminada = (base64 === null);
   const zona = document.getElementById('fotoZona');
   if (!zona) return;
 
-  // Limpiar contenido previo (excepto el input)
   const inputFile = zona.querySelector('input[type="file"]');
   zona.innerHTML = '';
   zona.appendChild(inputFile);
@@ -144,8 +127,8 @@ function previsualizarFoto(event) {
   const archivo = event.target.files[0];
   if (!archivo) return;
 
-  if (archivo.size > 2 * 1024 * 1024) {
-    toast('La imagen es muy grande. Máx. 2 MB.', 'aviso');
+  if (archivo.size > 15 * 1024 * 1024) {
+    toast('La imagen es muy grande. Máx. 15 MB.', 'aviso');
     event.target.value = '';
     return;
   }
@@ -178,18 +161,9 @@ function abrirModalProducto(id = null) {
   document.getElementById('modalTitulo').textContent = id ? '✏️ Editar Producto' : '➕ Agregar Producto';
   document.getElementById('productoId').value = id || '';
 
-  // Poblar categorías
   const sel = document.getElementById('fpCategoria');
   sel.innerHTML = config.categorias.map(c => `<option value="${c}">${c}</option>`).join('');
 
-  // Poblar ubicaciones (solo modo bodega)
-  if (esModoBodega()) {
-    const selUbic = document.getElementById('fpUbicacion');
-    selUbic.innerHTML = '<option value="">Sin ubicación</option>' +
-      (config.ubicaciones || []).map(u => `<option value="${u}">${u}</option>`).join('');
-  }
-
-  // Hacer precioVenta obligatorio solo en modo negocio
   document.getElementById('fpPrecioVenta').required = esModoNegocio();
 
   if (id) {
@@ -209,10 +183,8 @@ function abrirModalProducto(id = null) {
     document.getElementById('fpProveedor').value = p.proveedor || '';
     document.getElementById('fpNotas').value = p.notas || '';
     if (esModoBodega()) {
-      document.getElementById('fpUbicacion').value = p.ubicacion || '';
       document.getElementById('fpFechaCompra').value = p.fechaCompra || '';
     }
-    // Cargar foto si existe
     fotoEliminada = false;
     aplicarFotoEnZona(p.foto || null);
   } else {
@@ -253,7 +225,6 @@ function guardarProducto(e) {
     fechaAbastecimiento: esModoNegocio() ? (document.getElementById('fpFechaAbastecimiento').value || null) : null,
     proxAbastecimiento: esModoNegocio() ? (document.getElementById('fpProxAbastecimiento').value || null) : null,
     proveedor: esModoNegocio() ? (document.getElementById('fpProveedor').value.trim() || null) : null,
-    ubicacion: esModoBodega() ? (document.getElementById('fpUbicacion').value || null) : null,
     fechaCompra: esModoBodega() ? (document.getElementById('fpFechaCompra').value || null) : null,
     notas: document.getElementById('fpNotas').value.trim() || null,
     foto: fotoEliminada ? null : (fotoBase64Actual || (id ? (productos.find(p=>p.id===id)||{}).foto || null : null)),
@@ -311,7 +282,6 @@ function confirmarEliminar() {
 function abrirInventarioFiltrado(filtro) {
   if (filtroActual.buscar) filtroActual.buscar = '';
   filtroActual.categoria = '';
-  if (esModoBodega()) filtroActual.ubicacion = '';
   filtroActual.stock = filtro;
   mostrarPagina('inventario');
   renderTabla();

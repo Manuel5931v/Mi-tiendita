@@ -2,42 +2,72 @@
 //  CONFIGURACIÓN
 // ═══════════════════════════════════════
 
+function _getDiasAvisoInput() {
+  // Soporta id duplicado legacy + nuevo id único para bodega
+  const principal = document.getElementById('configDiasAviso');
+  const bodega = document.getElementById('configDiasAvisoBodega');
+  if (esModoBodega() && bodega) return bodega;
+  if (principal) return principal;
+  const all = document.querySelectorAll('#configDiasAviso');
+  for (const el of all) { if (el.offsetParent !== null) return el; }
+  return all[0] || bodega || principal;
+}
+function _setDiasAvisoValor(val) {
+  const all = document.querySelectorAll('#configDiasAviso');
+  all.forEach(el => el.value = val);
+  const bodega = document.getElementById('configDiasAvisoBodega');
+  if (bodega) bodega.value = val;
+}
+
 function guardarConfig() {
   if (esModoNegocio()) {
-    config.nombreTienda = document.getElementById('configNombreTienda').value;
-    config.moneda = document.getElementById('configMoneda').value;
-    config.umbralStock = parseInt(document.getElementById('configUmbral').value) || 5;
+    const elNombre = document.getElementById('configNombreTienda');
+    const elMoneda = document.getElementById('configMoneda');
+    const elUmbral = document.getElementById('configUmbral');
+    if (elNombre) config.nombreTienda = elNombre.value;
+    if (elMoneda) config.moneda = elMoneda.value;
+    if (elUmbral) config.umbralStock = parseInt(elUmbral.value) || 5;
   }
-  config.diasAviso = parseInt(document.getElementById('configDiasAviso').value) || 15;
+  const elDias = _getDiasAvisoInput();
+  config.diasAviso = parseInt(elDias ? elDias.value : 15) || 15;
   guardarEnStorage();
   toast('Configuración guardada');
 }
 
 function renderConfig() {
   if (esModoNegocio()) {
-    document.getElementById('configNombreTienda').value = config.nombreTienda;
-    document.getElementById('configMoneda').value = config.moneda;
-    document.getElementById('configUmbral').value = config.umbralStock;
+    const elNombre = document.getElementById('configNombreTienda');
+    const elMoneda = document.getElementById('configMoneda');
+    const elUmbral = document.getElementById('configUmbral');
+    if (elNombre) elNombre.value = config.nombreTienda;
+    if (elMoneda) elMoneda.value = config.moneda;
+    if (elUmbral) elUmbral.value = config.umbralStock;
   }
-  document.getElementById('configDiasAviso').value = config.diasAviso;
+  _setDiasAvisoValor(config.diasAviso);
   renderCategorias();
-  if (esModoBodega()) {
-    renderUbicaciones();
-  }
-  
-  // Inicializar UI de autenticación
   actualizarUIAuth();
+  _syncFuenteUI();
+  try{ if(typeof lucide!=='undefined'&&lucide.createIcons) lucide.createIcons(); }catch(e){}
+}
+
+function _syncFuenteUI(){
+  try{
+    const n = localStorage.getItem('tf_fontScale') || 'normal';
+    if(typeof actualizarBotonesFuente==='function') actualizarBotonesFuente(n);
+  }catch(e){}
 }
 
 function renderCategorias() {
   const lista = document.getElementById('listaCategorias');
   if (lista) {
-    lista.innerHTML = config.categorias.map(c => `
+    lista.innerHTML = config.categorias.map(c => {
+      const esc = escHtml(c).replace(/'/g, "\\'");
+      return `
       <div class="cat-tag">
         ${escHtml(c)}
-        <button class="cat-eliminar" onclick="eliminarCategoria('${escHtml(c)}')" title="Eliminar">×</button>
-      </div>
-    `).join('');
+        <button class="cat-eliminar" onclick="eliminarCategoria('${esc}')" title="Eliminar">×</button>
+      </div>`;
+    }).join('');
   }
 }
 
@@ -54,7 +84,6 @@ function agregarCategoria() {
 }
 
 function eliminarCategoria(cat) {
-  // Verificar si hay productos usando esta categoría
   const productosConCat = productos.filter(p => p.categoria === cat);
   if (productosConCat.length > 0) {
     toast(`No puedes eliminar "${cat}" porque ${productosConCat.length} producto(s) la usan. Primero reasigna o elimina esos productos.`, 'error');
@@ -64,39 +93,6 @@ function eliminarCategoria(cat) {
   guardarEnStorage();
   renderCategorias();
   toast(`Categoría "${cat}" eliminada`);
-}
-
-// ❌ ELIMINADA: función eliminarCategoriaSeleccionada()
-
-function renderUbicaciones() {
-  const lista = document.getElementById('listaUbicaciones');
-  if (lista) {
-    lista.innerHTML = (config.ubicaciones || []).map(u => `
-      <div class="cat-tag">
-        ${escHtml(u)}
-        <button class="cat-eliminar" onclick="eliminarUbicacion('${escHtml(u)}')" title="Eliminar">×</button>
-      </div>
-    `).join('');
-  }
-}
-
-function agregarUbicacion() {
-  const inp = document.getElementById('nuevaUbicInput');
-  const val = inp.value.trim();
-  if (!val) return;
-  if (!config.ubicaciones) config.ubicaciones = [];
-  if (config.ubicaciones.includes(val)) { toast('Esa ubicación ya existe', 'aviso'); return; }
-  config.ubicaciones.push(val);
-  inp.value = '';
-  guardarEnStorage();
-  renderUbicaciones();
-  toast(`Ubicación "${val}" agregada`);
-}
-
-function eliminarUbicacion(ubic) {
-  config.ubicaciones = config.ubicaciones.filter(u => u !== ubic);
-  guardarEnStorage();
-  renderUbicaciones();
 }
 
 function cambiarModoAplicacion() {
@@ -110,7 +106,6 @@ function cambiarModoAplicacion() {
 //  AUTENTICACIÓN FIREBASE (solo Google)
 // ═══════════════════════════════════════
 
-// Actualizar UI de autenticación
 function actualizarUIAuth() {
   const authButtons = document.getElementById('authButtons');
   const logoutButton = document.getElementById('logoutButton');
@@ -119,7 +114,7 @@ function actualizarUIAuth() {
   if (typeof uidActual !== 'undefined' && uidActual) {
     if (authButtons) authButtons.style.display = 'none';
     if (logoutButton) logoutButton.style.display = 'flex';
-    if (estadoCuenta) estadoCuenta.textContent = '✅ Conectado como ' + (usuarioActual?.email || 'usuario');
+    if (estadoCuenta) estadoCuenta.textContent = '✅ Conectado como ' + ((typeof usuarioActual !== 'undefined' && usuarioActual?.email) || 'usuario');
   } else {
     if (authButtons) authButtons.style.display = 'flex';
     if (logoutButton) logoutButton.style.display = 'none';
