@@ -51,7 +51,6 @@ const RECAPTCHA_SITE_KEY = "6LcdQ4MtAAAAAGWf0y4CuIOorei6_5Ay2bwFLIKE";
 
 const appIA = initializeApp(firebaseConfig, "appIA"); // app secundaria, coexiste con la de firebase.js
 
-let modelo = null;
 let appCheckListo = false;
 
 try {
@@ -66,6 +65,26 @@ try {
 
 const ai = getAI(appIA, { backend: new GoogleAIBackend() }); // "Gemini Developer API" (gratis)
 
+const MODELO_GEMINI = 'gemini-3.6-flash';
+
+// Crea el modelo con el systemPrompt de CADA llamada. No se cachea el primer
+// prompt: cada función (sugerencias, chat) usa el suyo. La creación del modelo
+// es local (sin red), así que recrearlo por llamada no tiene costo significativo.
+function crearModelo(systemPrompt, jsonMode) {
+  const cfg = {
+    model: MODELO_GEMINI,
+    systemInstruction: systemPrompt
+  };
+  if (jsonMode) {
+    try {
+      cfg.generationConfig = { responseMimeType: 'application/json' };
+    } catch (err) {
+      console.warn('JSON Mode no soportado, se usará texto plano:', err);
+    }
+  }
+  return getGenerativeModel(ai, cfg);
+}
+
 /**
  * Genera texto con Gemini a través de Firebase AI Logic.
  * @param {string} systemPrompt - instrucción de sistema (rol del asistente)
@@ -73,13 +92,19 @@ const ai = getAI(appIA, { backend: new GoogleAIBackend() }); // "Gemini Develope
  * @returns {Promise<string>} texto generado
  */
 window.generarConGeminiFirebase = async function (systemPrompt, userPrompt) {
-  if (!modelo) {
-    modelo = getGenerativeModel(ai, {
-      model: 'gemini-3.6-flash',
-      systemInstruction: systemPrompt
-    });
-  }
-  const resultado = await modelo.generateContent(userPrompt);
+  const resultado = await crearModelo(systemPrompt, false).generateContent(userPrompt);
+  return resultado.response.text();
+};
+
+/**
+ * Genera una respuesta con Gemini pidiendo JSON estricto (responseMimeType
+ * application/json). Úsalo para el chat "Mi Asistente", que parsea la salida.
+ * @param {string} systemPrompt - instrucción de sistema que define el shape JSON
+ * @param {string} userPrompt - la frase del usuario
+ * @returns {Promise<string>} cadena JSON cruda (puede traer código de bloque)
+ */
+window.generarJSONConGemini = async function (systemPrompt, userPrompt) {
+  const resultado = await crearModelo(systemPrompt, true).generateContent(userPrompt);
   return resultado.response.text();
 };
 

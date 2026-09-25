@@ -243,7 +243,7 @@ function renderPrediccionAsistente() {
     .sort((a, b) => a.pred.diasRestantes - b.pred.diasRestantes);
 
   if (predicciones.length === 0) {
-    cont.innerHTML = '<p style="color:var(--texto-suave);font-size:0.88rem;">Registra ventas o consumo en la sección "Ventas" para que la IA pueda calcular predicciones de agotamiento.</p>';
+    cont.innerHTML = '<p style="color:var(--tinta-suave); font-size:0.85rem; margin-bottom:10px;">Registra ventas o consumo en la sección "Ventas" para que la IA pueda calcular predicciones de agotamiento.</p>';
     return;
   }
 

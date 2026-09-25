@@ -193,21 +193,35 @@
     <div class="bienvenida fade-in">
       <h1>Asistente IA</h1>
       <p>La IA analiza tu historial de compras y consumo para sugerirte cuándo reabastecer y qué usar primero antes de que se venza.</p>
+      <h2 style="font-family:var(--font-display); font-size:1.2rem; font-weight:700; color:var(--verde); margin-top:14px;">Predicción de agotamiento</h2>
+      <p>Calculada localmente con tu ritmo real de ventas/consumo registrado.</p>
+      <div id="asistentePrediccion"></div>
     </div>
     <div class="dashboard-grid">
-      <div class="card fade-in">
-        <div class="card-titulo"><i data-lucide="sparkles" style="width:16px;height:16px"></i> Predicción de agotamiento</div>
-        <p style="color:var(--tinta-suave); font-size:0.85rem; margin-bottom:10px;">Calculada localmente con tu ritmo real de ventas/consumo registrado.</p>
-        <div id="asistentePrediccion"></div>
-      </div>
-      <div class="card fade-in">
-        <div class="card-titulo"><i data-lucide="lightbulb" style="width:16px;height:16px"></i> Sugerencias de reabastecimiento</div>
-        <p style="color:var(--tinta-suave); font-size:0.85rem; margin-bottom:10px;">Generadas con la IA a partir del resumen de tu historial.</p>
-        <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
-          <button class="btn btn-primario" id="btnGenerarSugerenciaIA" onclick="obtenerSugerenciaIA()"><i data-lucide="sparkles" style="width:16px;height:16px"></i> Generar sugerencia</button>
-          <button class="btn btn-secundario btn-sm" onclick="borrarSugerenciasIA()"><i data-lucide="trash-2" style="width:14px;height:14px"></i> Borrar historial</button>
+      <div class="recomendaciones-col">
+        <div class="card fade-in">
+          <div class="card-titulo"><i data-lucide="lightbulb" style="width:16px;height:16px"></i> Sugerencias de reabastecimiento</div>
+          <p style="color:var(--tinta-suave); font-size:0.85rem; margin-bottom:10px;">Generadas con la IA a partir del resumen de tu historial.</p>
+          <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+            <button class="btn btn-primario" id="btnGenerarSugerenciaIA" onclick="obtenerSugerenciaIA()"><i data-lucide="sparkles" style="width:16px;height:16px"></i> Generar sugerencia</button>
+            <button class="btn btn-secundario btn-sm" onclick="borrarSugerenciasIA()"><i data-lucide="trash-2" style="width:14px;height:14px"></i> Borrar historial</button>
+          </div>
+          <div id="sugerenciasIALista"></div>
         </div>
-        <div id="sugerenciasIALista"></div>
+      </div>
+      <div class="card fade-in chat-col">
+        <div class="card-titulo"><i data-lucide="message-circle" style="width:16px;height:16px"></i> Mi Asistente</div>
+        <p style="color:var(--tinta-suave); font-size:0.85rem; margin-bottom:10px;">Dile qué se vendió o se abasteció con tus palabras, o dicta con el micrófono. Siempre te pedirá confirmación antes de registrar.</p>
+        <div class="historial-lista chat-feed" id="chatFeed"></div>
+        <div class="chat-entrada">
+          <label class="buscador" style="flex:1; min-width:0; margin:0">
+            <i data-lucide="message-circle" style="width:16px;height:16px;color:var(--tinta-fina)"></i>
+            <input type="text" id="chatInput" placeholder="Ej: se vendieron 2 bolsas de arroz" maxlength="300" aria-label="Mensaje para Mi Asistente">
+          </label>
+          <button class="btn btn-primario" id="chatEnviar" onclick="enviarMensajeChat()"><i data-lucide="send" style="width:15px;height:15px"></i> Enviar</button>
+          <button class="btn btn-secundario" id="chatMic" onclick="chatearPorVoz()" title="Dictar por voz" style="display:none"><i data-lucide="mic" style="width:16px;height:16px"></i></button>
+        </div>
+        <div id="chatAvisoVoz" style="font-size:0.78rem; color:var(--tinta-suave); margin-top:8px;"></div>
       </div>
     </div>
   </div>
@@ -523,6 +537,7 @@
 <script src="js/reports.js"></script>
 <script src="js/ai.js"></script>
 <script type="module" src="js/ai-firebase-bridge.js"></script>
+<script src="js/chat.js"></script>
 <script src="js/config.js"></script>
 <script src="js/test-bypass.js"></script>
 <script src="js/accesibilidad.js"></script>
