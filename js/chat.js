@@ -19,7 +19,7 @@ function iniciarChat() {
   if (!feed) return;
 
   agregarMensajeChat(
-    'Hola, soy Mi Asistente. Dime algo como "se vendieron 2 bolsas de arroz" o "se abastecieron 5 cocas".',
+    'Hola, soy Asistente. Dime algo como "se vendieron 2 bolsas de arroz" o "se abastecieron 5 cocas".',
     'asistente'
   );
 
@@ -126,7 +126,7 @@ function construirSystemPromptChat() {
   const lineas = productos.map(p =>
     `- id:${p.id} | nombre:${p.nombre} | marca:${p.marca || 'sin marca'} | unidad:${p.unidad || 'unidad'} | precioVenta:${p.precioVenta ?? 0} | stock:${p.stock}`
   );
-  return 'Eres "Mi Asistente", el asistente conversacional en español de una app de control de inventario llamada "Mi Tiendita". ' +
+  return 'Eres "Asistente", el asistente conversacional en español de una app de control de inventario llamada "Mi Tiendita". ' +
     'Debes interpretar la frase del usuario pensando en el INVENTARIO REAL del modo ' + modo + ' que se lista abajo, ' +
     'y responder ÚNICAMENTE con un objeto JSON válido: sin texto adicional, sin markdown, sin comentarios.\n' +
     'INVENTARIO REAL (usa SIEMPRE el campo "id" exacto tal como aparece):\n' + lineas.join('\n') + '\n\n' +
