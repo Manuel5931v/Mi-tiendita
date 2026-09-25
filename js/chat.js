@@ -320,19 +320,61 @@ function elegirCandidatoChat(indice) {
 
 // ─── VOZ ─────────────────────────────────────────
 
+let chatReintentosVoz = 0;          // reintentos automáticos tras un final sin audio
+let chatDetenidoPorUsuario = false; // true si el usuario detuvo (o hubo error fatal): no reintentar
+let chatHuboResultadoFinal = false; // se transcribió al menos un resultado final
+let chatErrorVoz = false;           // true si se mostró un error fatal (no sobrescribir el aviso)
+let chatIniciandoVoz = false;       // true mientras se verifica el permiso del micrófono
+let chatIdiomaVoz = 'es-419';       // idioma activo; cae a es-ES/es-MX si no se soporta
+
 function chatearPorVoz() {
   const Reconocedor = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!Reconocedor) return;
 
+  const mic = document.getElementById('chatMic');
+  const aviso = document.getElementById('chatAvisoVoz');
+
+  // Segundo clic: detener y dejar el texto transcrito en el input
   if (chatEscuchando) {
+    chatDetenidoPorUsuario = true;
     if (chatReconocedor) chatReconocedor.stop();
     return;
   }
+  if (chatIniciandoVoz) return; // ya se está pidiendo el permiso
+
+  chatIniciandoVoz = true;
+  chatReintentosVoz = 0;
+  if (aviso) aviso.textContent = 'Solicitando permiso del micrófono...';
+
+  // Pre-check de permiso: diagnóstico claro si el navegador bloqueó el micrófono
+  if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(function (stream) {
+        // Solo verificábamos el permiso: libera el stream
+        stream.getTracks().forEach(function (t) { t.stop(); });
+        chatIniciandoVoz = false;
+        iniciarReconocedorVoz();
+      })
+      .catch(function () {
+        chatIniciandoVoz = false;
+        if (mic) mic.classList.remove('chat-mic-activo');
+        if (aviso) aviso.textContent = 'El navegador bloqueó el micrófono. Verifica el permiso y vuelve a intentar.';
+      });
+    return;
+  }
+
+  chatIniciandoVoz = false;
+  iniciarReconocedorVoz();
+}
+
+function iniciarReconocedorVoz() {
+  const Reconocedor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Reconocedor || chatEscuchando) return;
 
   const r = new Reconocedor();
   chatReconocedor = r;
-  r.lang = 'es-419';
-  r.continuous = false;
+  r.lang = chatIdiomaVoz;
+  r.continuous = true;   // la sesión queda abierta hasta que el usuario la detenga
   r.interimResults = true;
 
   const mic = document.getElementById('chatMic');
@@ -340,10 +382,13 @@ function chatearPorVoz() {
 
   r.onstart = function () {
     chatEscuchando = true;
+    chatDetenidoPorUsuario = false;
+    chatHuboResultadoFinal = false;
+    chatErrorVoz = false;
     const input = document.getElementById('chatInput');
     chatInputVacioAlIniciar = !input || input.value.trim() === '';
     if (mic) mic.classList.add('chat-mic-activo');
-    if (aviso) aviso.textContent = 'Escuchando... habla ahora (es-419).';
+    if (aviso) aviso.textContent = 'Escuchando... habla ahora (' + chatIdiomaVoz + '). Clic en el micrófono para detener.';
   };
 
   r.onresult = function (event) {
@@ -354,14 +399,19 @@ function chatearPorVoz() {
       if (event.results[i].isFinal) final += t;
       else interim += t;
     }
+    if (final) chatHuboResultadoFinal = true;
     const input = document.getElementById('chatInput');
     if (input) {
-      const textoVoz = (final || interim).trim();
+      const textoVoz = (final + ' ' + interim).replace(/\s+/g, ' ').trim();
       if (textoVoz) {
         if (chatInputVacioAlIniciar) {
           input.value = textoVoz;
         } else if (final) {
-          input.value = (input.value.trim() + ' ' + textoVoz).trim();
+          // Con continuous:true, `final` acumula todos los segmentos;
+          // agrega solo el último (nuevo) para no duplicar.
+          const ultimo = event.results[event.results.length - 1];
+          const nuevo = ultimo && ultimo.isFinal ? ultimo[0].transcript.trim() : '';
+          if (nuevo) input.value = (input.value.trim() + ' ' + nuevo).trim();
         }
       }
     }
@@ -372,23 +422,64 @@ function chatearPorVoz() {
 
   r.onerror = function (event) {
     console.warn('Error de reconocimiento de voz:', event.error);
+    const err = event.error || 'desconocido';
+
+    // Fallback de idioma: algunos Chrome no soportan el locale regional
+    if (err === 'language-not-supported' && chatIdiomaVoz !== 'es-MX') {
+      chatIdiomaVoz = chatIdiomaVoz === 'es-419' ? 'es-ES' : 'es-MX';
+      if (aviso) aviso.textContent = 'Reintentando con idioma ' + chatIdiomaVoz + '...';
+      return; // onend reintentará automáticamente con el nuevo idioma
+    }
+
+    // Errores recuperables: no mostrar mensaje, onend reintentará
+    if (err === 'no-speech' || err === 'aborted') {
+      return;
+    }
+
     chatEscuchando = false;
+    chatDetenidoPorUsuario = true; // error real: no reintentar
+    chatErrorVoz = true;
     if (mic) mic.classList.remove('chat-mic-activo');
-    if (aviso) aviso.textContent = 'No se pudo escuchar (error: ' + (event.error || 'desconocido') + '). Escribe a mano.';
+    if (aviso) aviso.textContent = 'No se pudo escuchar (error: ' + err + '). Escribe a mano.';
   };
 
   r.onend = function () {
     chatEscuchando = false;
     if (mic) mic.classList.remove('chat-mic-activo');
-    if (aviso && aviso.textContent.indexOf('Texto transcrito') === -1) {
+
+    // Si terminó sin que el usuario lo detuviera y sin transcribir nada,
+    // reintenta automáticamente (máx. 3) para no morir al primer silencio.
+    if (!chatDetenidoPorUsuario && !chatHuboResultadoFinal && chatReintentosVoz < 3) {
+      chatReintentosVoz++;
+      // Si el primer intento con es-419 murió sin audio, cambia de idioma
+      if (chatReintentosVoz === 1 && chatIdiomaVoz === 'es-419') {
+        chatIdiomaVoz = 'es-ES';
+      }
+      if (aviso && aviso.textContent.indexOf('Reintentando con idioma') === -1) {
+        aviso.textContent = 'No te escuché, reintentando (' + chatReintentosVoz + '/3)...';
+      }
+      const recon = r;
+      setTimeout(function () {
+        if (chatReconocedor === recon && !chatEscuchando && !chatDetenidoPorUsuario) {
+          iniciarReconocedorVoz();
+        }
+      }, 300);
+      return;
+    }
+
+    chatReintentosVoz = 0;
+    if (aviso && !chatErrorVoz && aviso.textContent.indexOf('Texto transcrito') === -1) {
       aviso.textContent = 'Dictado finalizado.';
     }
+    chatErrorVoz = false;
   };
 
   try {
     r.start();
   } catch (err) {
     console.warn('No se pudo iniciar el reconocimiento de voz:', err);
+    chatEscuchando = false;
+    if (mic) mic.classList.remove('chat-mic-activo');
     if (aviso) aviso.textContent = 'El navegador bloqueó el micrófono. Verifica el permiso y vuelve a intentar.';
   }
 }
