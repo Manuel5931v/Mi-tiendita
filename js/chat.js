@@ -339,6 +339,19 @@ let chatTimeoutGrabacion = null;    // timeout del tope de 60s de grabación
 let chatInputValorAlIniciar = '';   // valor del input al iniciar la grabación
 let chatErrorGrabacion = false;     // true si el MediaRecorder falló (onerror)
 
+// Flag adaptativo: si Web Speech falló con network, la próxima vez ir directo a grabación + IA
+function usarGrabacionDirecta() {
+  try {
+    return localStorage.getItem('vozUsarGrabacion') === '1';
+  } catch (e) { return false; }
+}
+
+function marcarUsarGrabacion() {
+  try {
+    localStorage.setItem('vozUsarGrabacion', '1');
+  } catch (e) { /* almacenamiento no disponible */ }
+}
+
 function chatearPorVoz() {
   const Reconocedor = window.SpeechRecognition || window.webkitSpeechRecognition;
   const mic = document.getElementById('chatMic');
@@ -356,6 +369,12 @@ function chatearPorVoz() {
   }
   if (chatIniciandoVoz) return; // ya se está pidiendo el permiso
   if (chatTranscribiendo) return; // la transcripción IA está en curso: ignora clics
+
+  // Flag adaptativo: Web Speech falló antes con network → ir directo a grabación + IA
+  if (usarGrabacionDirecta()) {
+    grabarConMicrofono();
+    return;
+  }
 
   // Sin Web Speech API → modo grabación + IA directo
   if (!Reconocedor) {
@@ -525,6 +544,8 @@ function iniciarReconocedorVoz() {
     if (aviso && !chatErrorVoz && !chatHuboResultadoFinal) {
       if (chatUltimoErrorVoz === 'network') {
         // El servicio de voz de Chrome no responde: cambia a grabación + IA
+        // y recuerda la preferencia para ir directo la próxima vez
+        marcarUsarGrabacion();
         aviso.textContent = 'El servicio de voz no respondió. Cambiando a modo grabación + IA...';
         grabarConMicrofono(true);
       } else {
