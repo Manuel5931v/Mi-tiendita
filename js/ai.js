@@ -149,8 +149,7 @@ async function obtenerSugerenciaIA() {
   const contexto = construirContextoIA();
   const instruccionSistema =
     'Eres el Asistente IA de Mi-Tiendita (StockIA), una app de control de inventario. ' +
-    'Analizas patrones de consumo y abastecimiento y das recomendaciones breves, prácticas y en español, ' +
-    'para reducir desperdicio y evitar quedarse sin productos (ODS 12).';
+    'Analizas patrones de consumo y abastecimiento y das recomendaciones breves, prácticas y en español, ' ;
   const promptUsuario =
     `Este es el historial resumido de inventario de "${esModoNegocio() ? (config.nombreTienda || 'mi tienda') : 'mi bodega'}":\n\n${contexto}\n\n` +
     `Con base en estos datos, da una recomendación breve (máximo 4-5 líneas) de reabastecimiento: ` +

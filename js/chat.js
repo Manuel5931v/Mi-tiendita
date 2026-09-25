@@ -19,7 +19,7 @@ function iniciarChat() {
   if (!feed) return;
 
   agregarMensajeChat(
-    'Hola, soy Asistente. Dime algo como "se vendieron 2 bolsas de arroz" o "se abastecieron 5 cocas".',
+    'Hola, soy tu asistente. Dime algo como "se vendieron 2 bolsas de arroz" o "se abastecieron 5 cocas".',
     'asistente'
   );
 
