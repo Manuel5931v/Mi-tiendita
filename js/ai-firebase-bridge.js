@@ -108,6 +108,22 @@ window.generarJSONConGemini = async function (systemPrompt, userPrompt) {
   return resultado.response.text();
 };
 
+/**
+ * Transcribe audio con Gemini (inline base64). Úsalo como fallback
+ * cuando Web Speech API no esté disponible o falle con 'network'.
+ * @param {string} base64Audio - audio en base64 (SIN prefijo data:)
+ * @param {string} mimeType - ej. 'audio/webm' | 'audio/mp3' | 'audio/wav'
+ * @returns {Promise<string>} texto transcrito
+ */
+window.transcribirAudioConGemini = async function (base64Audio, mimeType) {
+  const modelo = crearModelo('Eres un transcriptor de voz en español. Transcribe EXACTAMENTE lo que se dice, sin comentarios, sin correcciones, sin puntuación inventada. Devuelve solo el texto.', false);
+  const resultado = await modelo.generateContent([
+    { text: 'Transcribe el audio.' },
+    { inlineData: { mimeType: mimeType, data: base64Audio } }
+  ]);
+  return resultado.response.text();
+};
+
 // Bandera para que ai.js sepa que el puente terminó de cargar
 window.geminiFirebaseListo = true;
 if (!appCheckListo) {

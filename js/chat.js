@@ -31,11 +31,13 @@ function iniciarChat() {
     });
   }
 
-  // Voz: solo si el navegador la soporta
+  // Voz: Web Speech API o, si no existe, grabación + IA (MediaRecorder)
   const mic = document.getElementById('chatMic');
   const soportaVoz = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const soportaGrabacion = typeof MediaRecorder !== 'undefined' &&
+    navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function';
   if (mic) {
-    if (soportaVoz) {
+    if (soportaVoz || soportaGrabacion) {
       mic.style.display = '';
     } else {
       mic.style.display = 'none';
@@ -328,21 +330,38 @@ let chatIniciandoVoz = false;       // true mientras se verifica el permiso del 
 let chatIdiomaVoz = 'es-419';       // idioma activo; cae a es-ES/es-MX si no se soporta
 let chatUltimoErrorVoz = null;      // último error recuperable ('no-speech'/'aborted'/'network') o null
 let chatStreamMic = null;           // stream del pre-check de permiso; se libera al terminar
+let chatGrabadora = null;           // MediaRecorder activo (modo grabación + IA)
+let chatChunksAudio = [];           // chunks de audio acumulados durante la grabación
+let chatGrabando = false;           // true mientras se graba (fallback IA)
+let chatStreamGrabacion = null;     // stream del micrófono en modo grabación
+let chatTranscribiendo = false;     // true mientras Gemini transcribe el audio grabado
+let chatTimeoutGrabacion = null;    // timeout del tope de 60s de grabación
+let chatInputValorAlIniciar = '';   // valor del input al iniciar la grabación
+let chatErrorGrabacion = false;     // true si el MediaRecorder falló (onerror)
 
 function chatearPorVoz() {
   const Reconocedor = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!Reconocedor) return;
-
   const mic = document.getElementById('chatMic');
   const aviso = document.getElementById('chatAvisoVoz');
 
-  // Segundo clic: detener y dejar el texto transcrito en el input
+  // Segundo clic: detener lo que esté activo (reconocimiento o grabación)
   if (chatEscuchando) {
     chatDetenidoPorUsuario = true;
-    if (chatReconocedor) chatReconocedor.stop();
+    if (chatGrabando) {
+      detenerGrabacion();
+    } else if (chatReconocedor) {
+      chatReconocedor.stop();
+    }
     return;
   }
   if (chatIniciandoVoz) return; // ya se está pidiendo el permiso
+  if (chatTranscribiendo) return; // la transcripción IA está en curso: ignora clics
+
+  // Sin Web Speech API → modo grabación + IA directo
+  if (!Reconocedor) {
+    grabarConMicrofono();
+    return;
+  }
 
   chatIniciandoVoz = true;
   chatReintentosVoz = 0;
@@ -503,9 +522,11 @@ function iniciarReconocedorVoz() {
     }
 
     chatReintentosVoz = 0;
-    if (aviso && !chatErrorVoz && aviso.textContent.indexOf('Texto transcrito') === -1) {
+    if (aviso && !chatErrorVoz && !chatHuboResultadoFinal) {
       if (chatUltimoErrorVoz === 'network') {
-        aviso.textContent = 'El servicio de voz de Google no respondió (error: network). Verifica tu conexión y vuelve a intentar, o escribe a mano.';
+        // El servicio de voz de Chrome no responde: cambia a grabación + IA
+        aviso.textContent = 'El servicio de voz no respondió. Cambiando a modo grabación + IA...';
+        grabarConMicrofono(true);
       } else {
         aviso.textContent = 'Dictado finalizado.';
       }
@@ -522,6 +543,207 @@ function iniciarReconocedorVoz() {
     liberarStreamMic();
     if (mic) mic.classList.remove('chat-mic-activo');
     if (aviso) aviso.textContent = 'El navegador bloqueó el micrófono. Verifica el permiso y vuelve a intentar.';
+  }
+}
+
+// ─── GRABACIÓN + IA (fallback cuando Web Speech falla o no existe) ──
+
+function grabarConMicrofono(desdeFallback) {
+  const mic = document.getElementById('chatMic');
+  const aviso = document.getElementById('chatAvisoVoz');
+
+  if (chatIniciandoVoz) return;
+  if (chatTranscribiendo) return; // ya se está transcribiendo: ignora
+  if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function' || typeof MediaRecorder === 'undefined') {
+    if (aviso) aviso.textContent = 'Tu navegador no permite grabar audio. Escribe a mano.';
+    return;
+  }
+  if (typeof window.transcribirAudioConGemini !== 'function') {
+    if (aviso) aviso.textContent = 'La transcripción con IA requiere conexión y Firebase AI Logic. Escribe a mano.';
+    return;
+  }
+
+  chatIniciandoVoz = true;
+  chatErrorGrabacion = false;
+  const input = document.getElementById('chatInput');
+  chatInputVacioAlIniciar = !input || input.value.trim() === '';
+  chatInputValorAlIniciar = input ? input.value : '';
+  if (aviso && !desdeFallback) aviso.textContent = 'Solicitando permiso del micrófono...';
+
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(function (stream) {
+      chatIniciandoVoz = false;
+      chatStreamGrabacion = stream;
+      const mime = typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : '';
+      let grabadora;
+      try {
+        grabadora = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+      } catch (e) {
+        grabadora = new MediaRecorder(stream); // fallback al formato default
+      }
+      chatGrabadora = grabadora;
+      chatChunksAudio = [];
+      grabadora.ondataavailable = function (e) {
+        if (e.data && e.data.size > 0) chatChunksAudio.push(e.data);
+      };
+      grabadora.onstop = function () {
+        procesarAudioGrabado(grabadora);
+      };
+      grabadora.onerror = function (e) {
+        console.warn('Error del MediaRecorder:', e && e.error);
+        limpiarTimeoutGrabacion();
+        chatGrabando = false;
+        chatEscuchando = false;
+        chatGrabadora = null;
+        chatChunksAudio = [];
+        chatErrorGrabacion = true;
+        liberarStreamGrabacion();
+        if (mic) mic.classList.remove('chat-mic-activo');
+        if (aviso) aviso.textContent = 'La grabación falló (error del micrófono). Escribe a mano.';
+      };
+      try {
+        grabadora.start();
+      } catch (e) {
+        chatGrabadora = null;
+        chatGrabando = false;
+        chatEscuchando = false;
+        liberarStreamGrabacion();
+        if (aviso) aviso.textContent = 'No se pudo iniciar la grabación. Escribe a mano.';
+        return;
+      }
+      chatGrabando = true;
+      chatEscuchando = true;
+      chatDetenidoPorUsuario = false;
+      if (mic) mic.classList.add('chat-mic-activo');
+      if (aviso) aviso.textContent = 'Grabando... clic para detener.';
+      // Tope de duración: Gemini inline tiene límite de tamaño (~20MB)
+      limpiarTimeoutGrabacion();
+      chatTimeoutGrabacion = setTimeout(function () {
+        if (chatGrabando) {
+          if (aviso) aviso.textContent = 'Grabación máxima alcanzada (60s).';
+          detenerGrabacion();
+        }
+      }, 60000);
+    })
+    .catch(function () {
+      chatIniciandoVoz = false;
+      chatStreamGrabacion = null;
+      if (mic) mic.classList.remove('chat-mic-activo');
+      if (aviso) aviso.textContent = 'El navegador bloqueó el micrófono. Verifica el permiso y vuelve a intentar.';
+    });
+}
+
+function limpiarTimeoutGrabacion() {
+  if (chatTimeoutGrabacion) {
+    clearTimeout(chatTimeoutGrabacion);
+    chatTimeoutGrabacion = null;
+  }
+}
+
+function detenerGrabacion() {
+  limpiarTimeoutGrabacion();
+  if (!chatGrabadora) return; // ya se limpió (error o stop previo)
+  if (chatGrabadora.state !== 'inactive') {
+    chatGrabadora.stop(); // onstop → procesarAudioGrabado
+    return;
+  }
+  // El recorder ya se detuvo (doble clic o error): limpia el estado visual
+  chatGrabando = false;
+  chatEscuchando = false;
+  const mic = document.getElementById('chatMic');
+  const aviso = document.getElementById('chatAvisoVoz');
+  if (mic) mic.classList.remove('chat-mic-activo');
+  if (aviso && aviso.textContent.indexOf('Grabando') !== -1) {
+    aviso.textContent = 'Grabación detenida.';
+  }
+}
+
+function liberarStreamGrabacion() {
+  if (chatStreamGrabacion) {
+    try {
+      chatStreamGrabacion.getTracks().forEach(function (t) { t.stop(); });
+    } catch (e) { /* el stream ya no existe */ }
+    chatStreamGrabacion = null;
+  }
+}
+
+function procesarAudioGrabado(grabadora) {
+  const mic = document.getElementById('chatMic');
+  const aviso = document.getElementById('chatAvisoVoz');
+
+  limpiarTimeoutGrabacion();
+  if (chatErrorGrabacion) {
+    chatErrorGrabacion = false;
+    return; // onerror ya limpió el estado y mostró el aviso
+  }
+  chatGrabando = false;
+  chatEscuchando = false;
+  if (mic) mic.classList.remove('chat-mic-activo');
+  liberarStreamGrabacion();
+
+  const blob = new Blob(chatChunksAudio, { type: grabadora.mimeType || 'audio/webm' });
+  chatChunksAudio = [];
+  chatGrabadora = null;
+
+  if (blob.size === 0) {
+    if (aviso) aviso.textContent = 'No se capturó audio. Intenta de nuevo.';
+    return;
+  }
+
+  if (aviso) aviso.textContent = 'Transcribiendo con IA...';
+  chatTranscribiendo = true;
+  if (mic) mic.disabled = true; // evita un segundo clic mientras transcribe
+
+  const mimeType = (blob.type || 'audio/webm').split(';')[0];
+  const lector = new FileReader();
+  lector.onload = function () {
+    const dataUrl = String(lector.result || '');
+    const base64 = dataUrl.split(',')[1] || '';
+    if (!base64) {
+      if (aviso) aviso.textContent = 'No se pudo leer el audio grabado. Escribe a mano.';
+      return;
+    }
+    transcribirConGemini(base64, mimeType);
+  };
+  lector.onerror = function () {
+    if (aviso) aviso.textContent = 'No se pudo leer el audio grabado. Escribe a mano.';
+  };
+  lector.readAsDataURL(blob);
+}
+
+async function transcribirConGemini(base64, mimeType) {
+  const aviso = document.getElementById('chatAvisoVoz');
+  try {
+    const texto = (await window.transcribirAudioConGemini(base64, mimeType)) || '';
+    const input = document.getElementById('chatInput');
+    if (input && texto.trim()) {
+      const valorActual = input.value;
+      if (chatInputVacioAlIniciar) {
+        // Si el usuario escribió mientras transcribía, concatena en vez de pisar
+        if (valorActual.trim() !== '' && valorActual !== chatInputValorAlIniciar) {
+          input.value = (valorActual.trim() + ' ' + texto.trim()).trim();
+        } else {
+          input.value = texto.trim();
+        }
+      } else {
+        input.value = (valorActual.trim() + ' ' + texto.trim()).trim();
+      }
+    }
+    if (aviso) aviso.textContent = 'Texto transcrito con IA. Puedes corregirlo y enviar.';
+  } catch (err) {
+    console.warn('Error transcribiendo audio con Gemini:', err);
+    const msg = String((err && err.message) || err || '');
+    if (/mime|unsupported|invalid/i.test(msg)) {
+      if (aviso) aviso.textContent = 'El formato de audio no fue aceptado. Escribe a mano.';
+    } else {
+      if (aviso) aviso.textContent = 'La IA no pudo transcribir el audio. Verifica tu conexión e intenta de nuevo, o escribe a mano.';
+    }
+  } finally {
+    chatTranscribiendo = false;
+    const mic = document.getElementById('chatMic');
+    if (mic) mic.disabled = chatEsperando; // restaura (setChatOcupado pudo deshabilitarlo)
   }
 }
 
