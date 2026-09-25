@@ -5,48 +5,53 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#2D5016">
 <meta name="description" content="Mi Tiendita - Control de inventario para pequeños emprendimientos">
-<title>Mi-Tiendita 🛒</title>
+<title>Mi Tiendita — Gratuita</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 <link rel="stylesheet" href="css/responsive.css">
+<script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
 
-<!-- PANTALLA DE SELECCIÓN DE MODO -->
+<!-- PANTALLA DE SELECCIÓN DE MODO — craft editorial -->
 <div class="modo-selector" id="modoSelector">
   <div class="modo-selector-content">
-    <h1>¿Qué tipo de inventario deseas administrar?</h1>
-    <p>Selecciona el modo que mejor se adapte a tus necesidades</p>
-    
+    <div class="modo-eyebrow"><i data-lucide="sparkles" style="width:14px;height:14px"></i> Elige cómo empezar</div>
+    <h1>¿Qué inventario deseas administrar?</h1>
+    <p>Selecciona el modo que mejor se adapte a tu flujo diario</p>
     <div class="modo-cards">
       <div class="modo-card" onclick="seleccionarModo('negocio')">
-        <span class="modo-card-icon">🏪</span>
+        <div class="modo-card-icon negocio"><i data-lucide="store" style="width:28px;height:28px"></i></div>
         <h2>Inventario para Negocio</h2>
-        <p>Ideal para tiendas, emprendimientos y negocios. Incluye ventas, reportes financieros, precios y control completo del inventario.</p>
-        <button class="modo-card-btn negocio">Usar modo Negocio</button>
+        <p>Ideal para tiendas y emprendimientos. Incluye ventas rápidas, reportes financieros, precios y control completo.</p>
+        <button class="modo-card-btn negocio"><i data-lucide="arrow-right" style="width:16px;height:16px"></i> Usar modo Negocio</button>
       </div>
-      
       <div class="modo-card" onclick="seleccionarModo('bodega')">
-        <span class="modo-card-icon">🏭</span>
+        <div class="modo-card-icon bodega"><i data-lucide="warehouse" style="width:28px;height:28px"></i></div>
         <h2>Inventario de Bodega</h2>
-        <p>Ideal para el almacén o bodega donde te abasteces: controla existencias, vencimientos y qué tienes disponible para surtir tu tienda.</p>
-        <button class="modo-card-btn bodega">Usar modo Bodega</button>
+        <p>Para tu almacén o bodega donde te abasteces: existencias, vencimientos y disponibilidad para surtir la tienda.</p>
+        <button class="modo-card-btn bodega"><i data-lucide="arrow-right" style="width:16px;height:16px"></i> Usar modo Bodega</button>
       </div>
     </div>
+    <div class="modo-nota">Puedes cambiar de modo en cualquier momento desde Configuración.</div>
   </div>
 </div>
 
-<!-- HEADER -->
+<!-- HEADER EDITORIAL — sin pill, border sutil -->
 <header>
   <div class="header-inner">
-    <div class="logo" id="appLogo">🛒 Mi<span>Tiendita</span></div>
-    <nav id="navPrincipal">
-      <button class="activo" onclick="mostrarPagina('dashboard', this)">🏠 Inicio</button>
-      <button onclick="mostrarPagina('inventario', this)">📦 Inventario</button>
-      <button class="modo-negocio-only" onclick="mostrarPagina('ventas', this)">🛒 Ventas</button>
-      <button class="modo-negocio-only" onclick="mostrarPagina('reportes', this)">📊 Reportes</button>
-      <button onclick="mostrarPagina('asistente', this)">🤖 Asistente IA</button>
-      <button onclick="mostrarPagina('config', this)">⚙️ Config</button>
+    <div class="logo" id="appLogo"><i data-lucide="store" class="logo-icon"></i> Mi<span>Tiendita</span></div>
+    <div class="font-controls" aria-label="Tamaño de letra">
+      <button id="fontDecrease" class="font-btn" onclick="fontStep(-1)" title="Reducir letra" aria-label="Reducir tamaño de letra"><i data-lucide="minus" style="width:14px;height:14px"></i> A-</button>
+      <button id="fontIncrease" class="font-btn" onclick="fontStep(1)" title="Aumentar letra" aria-label="Aumentar tamaño de letra">A+ <i data-lucide="plus" style="width:14px;height:14px"></i></button>
+    </div>
+    <nav id="navPrincipal" aria-label="Principal">
+      <button class="activo" onclick="mostrarPagina('dashboard', this)"><i data-lucide="house" style="width:16px;height:16px"></i> Inicio</button>
+      <button onclick="mostrarPagina('inventario', this)"><i data-lucide="package" style="width:16px;height:16px"></i> Inventario</button>
+      <button class="modo-negocio-only" onclick="mostrarPagina('ventas', this)"><i data-lucide="shopping-cart" style="width:16px;height:16px"></i> Ventas</button>
+      <button class="modo-negocio-only" onclick="mostrarPagina('reportes', this)"><i data-lucide="chart-column" style="width:16px;height:16px"></i> Reportes</button>
+      <button onclick="mostrarPagina('asistente', this)"><i data-lucide="sparkles" style="width:16px;height:16px"></i> IA</button>
+      <button onclick="mostrarPagina('config', this)"><i data-lucide="settings-2" style="width:16px;height:16px"></i> Config</button>
     </nav>
   </div>
 </header>
@@ -61,24 +66,21 @@
       <p>Aquí tienes el resumen de tu tienda de hoy, <span id="fechaHoy"></span>.</p>
     </div>
 
-    <!-- Stats -->
     <div class="stats-grid" id="statsGrid"></div>
 
-    <!-- Alertas -->
     <div class="alertas-section" id="alertasSection"></div>
 
-    <!-- Dashboard cards -->
     <div class="dashboard-grid">
       <div class="card fade-in">
-        <div class="card-titulo">🏷️ Productos por categoría</div>
+        <div class="card-titulo"><i data-lucide="tag" style="width:16px;height:16px"></i> Productos por categoría</div>
         <div id="dashCategorias"></div>
       </div>
       <div class="card fade-in">
-        <div class="card-titulo">⚠️ Próximos a vencer (30 días)</div>
+        <div class="card-titulo"><i data-lucide="clock-3" style="width:16px;height:16px"></i> Próximos a vencer (30 días)</div>
         <div id="dashVencimientos"></div>
       </div>
       <div class="card fade-in">
-        <div class="card-titulo">🔮 Predicción de agotamiento (IA)</div>
+        <div class="card-titulo"><i data-lucide="sparkles" style="width:16px;height:16px"></i> Predicción de agotamiento (IA)</div>
         <div id="dashPrediccionIA"></div>
       </div>
     </div>
@@ -87,15 +89,12 @@
   <!-- ═══════════════════ INVENTARIO ═══════════════════ -->
   <div class="pagina" id="pg-inventario">
     <div class="toolbar">
-      <div class="buscador">
-        <span>🔍</span>
+      <label class="buscador" aria-label="Buscar">
+        <i data-lucide="search" style="width:16px;height:16px;color:var(--tinta-fina)"></i>
         <input type="text" id="buscarInput" placeholder="Buscar producto..." oninput="filtrarProductos()">
-      </div>
+      </label>
       <select class="filtro-select" id="filtroCategoria" onchange="filtrarProductos()">
         <option value="">Todas las categorías</option>
-      </select>
-      <select class="filtro-select modo-bodega-only" id="filtroUbicacion" onchange="filtrarProductos()">
-        <option value="">Todas las ubicaciones</option>
       </select>
       <select class="filtro-select" id="filtroStock" onchange="filtrarProductos()">
         <option value="">Todo el stock</option>
@@ -105,15 +104,15 @@
         <option value="vencido">Vencidos</option>
         <option value="proximo">Por vencer</option>
       </select>
-      <button class="btn btn-secundario" onclick="limpiarFiltros()">🧹 Limpiar filtros</button>
-      <button class="btn btn-secundario" onclick="abrirModalPedidos()">📦 Pedidos<span class="pedidos-badge" id="pedidosBadge" style="display:none"></span></button>
-      <button class="btn btn-primario" onclick="abrirModalProducto()">➕ Agregar</button>
+      <button class="btn btn-secundario" onclick="limpiarFiltros()"><i data-lucide="x" style="width:14px;height:14px"></i> Limpiar</button>
+      <button class="btn btn-secundario" onclick="abrirModalPedidos()"><i data-lucide="package" style="width:16px;height:16px"></i> Pedidos<span class="pedidos-badge" id="pedidosBadge" style="display:none"></span></button>
+      <button class="btn btn-primario" onclick="abrirModalProducto()"><i data-lucide="plus" style="width:16px;height:16px"></i> Agregar</button>
     </div>
 
-    <div class="card" style="padding: 0;">
+    <div class="card" style="padding:0; overflow:hidden">
       <div id="inventarioGrid" class="inventario-grid"></div>
       <div id="sinProductos" class="sin-productos" style="display:none;">
-        <span class="icono-grande">📦</span>
+        <span class="icono-grande"><i data-lucide="package-open" style="width:40px;height:40px;color:var(--piedra-400)"></i></span>
         <p>No hay productos. ¡Agrega el primero!</p>
       </div>
     </div>
@@ -121,75 +120,69 @@
 
   <!-- ═══════════════════ VENTAS RÁPIDAS ═══════════════════ -->
   <div class="pagina" id="pg-ventas">
-
     <div class="ventas-header">
       <div class="ventas-titulo">
-        <h1>🛒 Ventas Rápidas</h1>
+        <h1>Ventas Rápidas</h1>
         <p>Toca un producto para venderlo o abastecerlo al instante.</p>
       </div>
       <div class="ventas-acciones">
-        <button class="btn btn-peligro btn-sm" onclick="limpiarHistorialDia()">🗑️ Limpiar historial</button>
+        <button class="btn btn-peligro btn-sm" onclick="limpiarHistorialDia()"><i data-lucide="trash-2" style="width:14px;height:14px"></i> Limpiar historial</button>
       </div>
     </div>
 
-    <!-- Toolbar: búsqueda + modo -->
     <div class="ventas-toolbar">
-      <div class="buscador" style="max-width:280px">
-        <span>🔍</span>
+      <label class="buscador" style="max-width:280px" aria-label="Buscar ventas">
+        <i data-lucide="search" style="width:16px;height:16px;color:var(--tinta-fina)"></i>
         <input type="text" id="ventasBuscar" placeholder="Buscar producto..." oninput="renderVentas()">
-      </div>
+      </label>
       <select class="filtro-select" id="ventasCategoria" onchange="renderVentas()">
         <option value="">Todas las categorías</option>
       </select>
       <div class="modo-tab">
-        <button class="modo-tab-btn activo" id="modoVender" onclick="cambiarModoVentas('vender')">➖ Vender</button>
-        <button class="modo-tab-btn" id="modoAbastecer" onclick="cambiarModoVentas('abastecer')">➕ Abastecer</button>
+        <button class="modo-tab-btn activo" id="modoVender" onclick="cambiarModoVentas('vender')"><i data-lucide="minus" style="width:14px;height:14px"></i> Vender</button>
+        <button class="modo-tab-btn" id="modoAbastecer" onclick="cambiarModoVentas('abastecer')"><i data-lucide="plus" style="width:14px;height:14px"></i> Abastecer</button>
       </div>
     </div>
 
-    <!-- Grid de tarjetas -->
     <div class="ventas-grid" id="ventasGrid"></div>
 
-    <!-- Historial del día -->
     <div class="card fade-in">
       <div class="historial-header">
-        <div class="card-titulo" style="margin-bottom:0">📋 Historial del día</div>
+        <div class="card-titulo" style="margin-bottom:0"><i data-lucide="clipboard-list" style="width:16px;height:16px"></i> Historial del día</div>
       </div>
-      <!-- Resumen -->
       <div class="resumen-dia" id="resumenDia"></div>
-      <!-- Lista -->
       <div class="historial-lista" id="historialLista">
         <div class="sin-historial">Aún no hay movimientos hoy. ¡Empieza a registrar tus ventas!</div>
       </div>
     </div>
   </div>
 
-
+  <!-- ═══════════════════ REPORTES ═══════════════════ -->
   <div class="pagina" id="pg-reportes">
     <div class="ventas-header">
       <div class="ventas-titulo">
-        <h1>📊 Reportes</h1>
+        <h1>Reportes</h1>
         <p>Resumen del valor del inventario, stock bajo, vencimientos y categorías.</p>
       </div>
       <div class="ventas-acciones">
-        <button class="btn btn-primario" onclick="descargarReportePDF()">⬇️ Descargar PDF del día</button>
+        <button class="btn btn-primario" onclick="descargarReportePDF()"><i data-lucide="download" style="width:16px;height:16px"></i> Descargar PDF del día</button>
       </div>
     </div>
     <div class="reporte-grid">
       <div class="card fade-in">
-        <div class="card-titulo">💰 Valor del inventario</div>
+        <div class="card-titulo"><i data-lucide="wallet" style="width:16px;height:16px"></i> Valor del inventario</div>
         <div id="reporteValor"></div>
       </div>
       <div class="card fade-in">
-        <div class="card-titulo">📉 Productos con stock bajo</div>
+        <div class="card-titulo"><i data-lucide="trending-down" style="width:16px;height:16px"></i> Productos con stock bajo</div>
         <div id="reporteBajoStock"></div>
       </div>
       <div class="card fade-in">
-        <div class="card-titulo">🗓️ Productos vencidos</div>
+        <div class="card-titulo"><i data-lucide="calendar-x" style="width:16px;height:16px"></i> Productos vencidos</div>
         <div id="reporteVencidos"></div>
       </div>
       <div class="card fade-in">
-        <div class="card-titulo">📦 Resumen por categoría</div>
+        <div class="card-titulo"><i data-lucide="layers" style="width:16px;height:16px"></i> Resumen por categoría</div>
         <div id="reporteCategorias"></div>
       </div>
     </div>
@@ -198,27 +191,21 @@
   <!-- ═══════════════════ ASISTENTE IA ═══════════════════ -->
   <div class="pagina" id="pg-asistente">
     <div class="bienvenida fade-in">
-      <h1>🤖 Asistente IA</h1>
+      <h1>Asistente IA</h1>
       <p>La IA analiza tu historial de compras y consumo para sugerirte cuándo reabastecer y qué usar primero antes de que se venza.</p>
     </div>
-
     <div class="dashboard-grid">
       <div class="card fade-in">
-        <div class="card-titulo">🔮 Predicción de agotamiento</div>
-        <p style="color:var(--texto-suave); font-size:0.85rem; margin-bottom:10px;">
-          Calculada localmente con tu ritmo real de ventas/consumo registrado.
-        </p>
+        <div class="card-titulo"><i data-lucide="sparkles" style="width:16px;height:16px"></i> Predicción de agotamiento</div>
+        <p style="color:var(--tinta-suave); font-size:0.85rem; margin-bottom:10px;">Calculada localmente con tu ritmo real de ventas/consumo registrado.</p>
         <div id="asistentePrediccion"></div>
       </div>
-
       <div class="card fade-in">
-        <div class="card-titulo">✨ Sugerencias de reabastecimiento</div>
-        <p style="color:var(--texto-suave); font-size:0.85rem; margin-bottom:10px;">
-          Generadas con la IA a partir del resumen de tu historial.
-        </p>
+        <div class="card-titulo"><i data-lucide="lightbulb" style="width:16px;height:16px"></i> Sugerencias de reabastecimiento</div>
+        <p style="color:var(--tinta-suave); font-size:0.85rem; margin-bottom:10px;">Generadas con la IA a partir del resumen de tu historial.</p>
         <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
-          <button class="btn btn-primario" id="btnGenerarSugerenciaIA" onclick="obtenerSugerenciaIA()">✨ Generar sugerencia</button>
-          <button class="btn btn-secundario btn-sm" onclick="borrarSugerenciasIA()">🗑️ Borrar historial</button>
+          <button class="btn btn-primario" id="btnGenerarSugerenciaIA" onclick="obtenerSugerenciaIA()"><i data-lucide="sparkles" style="width:16px;height:16px"></i> Generar sugerencia</button>
+          <button class="btn btn-secundario btn-sm" onclick="borrarSugerenciasIA()"><i data-lucide="trash-2" style="width:14px;height:14px"></i> Borrar historial</button>
         </div>
         <div id="sugerenciasIALista"></div>
       </div>
@@ -229,26 +216,35 @@
   <div class="pagina" id="pg-config">
     <div class="card fade-in">
       <div class="config-section">
-        <div class="config-titulo">🔄 Modo de Aplicación</div>
+        <div class="config-titulo"><i data-lucide="refresh-cw" style="width:16px;height:16px"></i> Modo de Aplicación</div>
         <div class="config-fila">
           <div class="config-info">
             <strong>Cambiar modo</strong>
             <span>Vuelve a seleccionar el tipo de inventario</span>
           </div>
-          <button class="btn btn-secundario btn-sm" onclick="cambiarModoAplicacion()">🔄 Cambiar modo</button>
+          <button class="btn btn-secundario btn-sm" onclick="cambiarModoAplicacion()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Cambiar modo</button>
         </div>
       </div>
 
+      <div class="config-section">
+        <div class="config-titulo"><i data-lucide="type" style="width:16px;height:16px"></i> 🔤 Tamaño de letra</div>
+        <p style="color:var(--tinta-suave); font-size:0.85rem; margin-bottom:10px;">Ajusta el tamaño del texto de toda la app. Se guarda automáticamente en este dispositivo.</p>
+        <div class="font-grupo">
+          <button id="btnFontNormal" class="btn btn-secundario btn-sm" onclick="cambiarTamanoLetra('normal')" aria-pressed="false"><i data-lucide="type" style="width:14px;height:14px"></i> Normal <span style="opacity:.65">100%</span></button>
+          <button id="btnFontGrande" class="btn btn-secundario btn-sm" onclick="cambiarTamanoLetra('grande')" aria-pressed="false"><i data-lucide="type" style="width:15px;height:15px"></i> Grande <span style="opacity:.65">112%</span></button>
+          <button id="btnFontExtra" class="btn btn-secundario btn-sm" onclick="cambiarTamanoLetra('extra')" aria-pressed="false"><i data-lucide="type" style="width:16px;height:16px"></i> Extra grande <span style="opacity:.65">125%</span></button>
+        </div>
+        <p class="font-hint">Ideal para mejorar la legibilidad sin recargar la vista.</p>
+      </div>
+
       <div class="config-section modo-negocio-only">
-        <div class="config-titulo">🏪 Mi Tienda</div>
+        <div class="config-titulo"><i data-lucide="store" style="width:16px;height:16px"></i> Mi Tienda</div>
         <div class="config-fila">
           <div class="config-info">
             <strong>Nombre de la tienda</strong>
             <span>Se muestra en los reportes</span>
           </div>
-          <input type="text" id="configNombreTienda"
-            style="max-width:220px; padding: 8px 12px;"
-            onchange="guardarConfig()">
+          <input type="text" id="configNombreTienda" style="max-width:220px; padding: 8px 12px;" onchange="guardarConfig()">
         </div>
         <div class="config-fila">
           <div class="config-info">
@@ -269,88 +265,70 @@
             <strong>Umbral de stock bajo</strong>
             <span>Cantidad mínima antes de alertar</span>
           </div>
-          <input type="number" id="configUmbral" min="1" max="100"
-            style="max-width:100px; padding:8px 12px;"
-            onchange="guardarConfig()">
+          <input type="number" id="configUmbral" min="1" max="100" style="max-width:100px; padding:8px 12px;" onchange="guardarConfig()">
         </div>
         <div class="config-fila">
           <div class="config-info">
             <strong>Días de aviso de vencimiento</strong>
             <span>Alertar cuántos días antes del vencimiento</span>
           </div>
-          <input type="number" id="configDiasAviso" min="1" max="90"
-            style="max-width:100px; padding:8px 12px;"
-            onchange="guardarConfig()">
+          <input type="number" id="configDiasAviso" min="1" max="90" style="max-width:100px; padding:8px 12px;" onchange="guardarConfig()">
         </div>
       </div>
 
       <div class="config-section modo-bodega-only">
-        <div class="config-titulo">⏰ Alertas</div>
+        <div class="config-titulo"><i data-lucide="bell" style="width:16px;height:16px"></i> Alertas</div>
         <div class="config-fila">
           <div class="config-info">
             <strong>Días de aviso de vencimiento</strong>
             <span>Alertar cuántos días antes del vencimiento</span>
           </div>
-          <input type="number" id="configDiasAviso" min="1" max="90"
-            style="max-width:100px; padding:8px 12px;"
-            onchange="guardarConfig()">
+          <input type="number" id="configDiasAvisoBodega" min="1" max="90" style="max-width:100px; padding:8px 12px;" onchange="guardarConfig()">
         </div>
       </div>
 
       <div class="config-section">
-        <div class="config-titulo">🏷️ Categorías de productos</div>
+        <div class="config-titulo"><i data-lucide="tag" style="width:16px;height:16px"></i> Categorías de productos</div>
         <div class="lista-categorias" id="listaCategorias"></div>
         <div class="add-cat-form">
           <input type="text" id="nuevaCatInput" placeholder="Nueva categoría..." maxlength="30">
-          <button class="btn btn-primario btn-sm" onclick="agregarCategoria()">Agregar</button>
-        </div>
-        
-      </div>
-
-      <div class="config-section modo-bodega-only">
-        <div class="config-titulo">📍 Ubicaciones</div>
-        <div class="lista-categorias" id="listaUbicaciones"></div>
-        <div class="add-cat-form">
-          <input type="text" id="nuevaUbicInput" placeholder="Nueva ubicación..." maxlength="30">
-          <button class="btn btn-primario btn-sm" onclick="agregarUbicacion()">Agregar</button>
+          <button class="btn btn-primario btn-sm" onclick="agregarCategoria()"><i data-lucide="plus" style="width:14px;height:14px"></i> Agregar</button>
         </div>
       </div>
 
       <div class="config-section">
-        <div class="config-titulo">☁️ Sincronización con la nube</div>
+        <div class="config-titulo"><i data-lucide="cloud" style="width:16px;height:16px"></i> Sincronización con la nube</div>
         <div class="config-fila">
           <div class="config-info">
             <strong>Estado de cuenta</strong>
             <span id="estadoCuenta">No has iniciado sesión (modo local)</span>
           </div>
         </div>
-        <p class="pago-aviso" id="syncPagoAviso" style="display:none;">
-          🔒 La sincronización con la nube es una función de pago. Activa tu membresía para sincronizar tus datos entre dispositivos.
-        </p>
+        <p class="pago-aviso" id="syncPagoAviso" style="display:none;"><i data-lucide="lock" style="width:14px;height:14px;vertical-align:-2px"></i> La sincronización con la nube es una función de pago. Activa tu membresía para sincronizar tus datos entre dispositivos.</p>
         <div class="config-fila" id="authButtons">
           <div class="config-info">
             <strong>Iniciar sesión</strong>
             <span>Sincroniza tus datos en la nube (requiere membresía activa)</span>
           </div>
-          <button class="btn btn-primario btn-sm" onclick="iniciarSesionConGoogle()">🔵 Iniciar sesión con Google</button>
+          <button class="btn btn-primario btn-sm" onclick="iniciarSesionConGoogle()"><i data-lucide="log-in" style="width:14px;height:14px"></i> Iniciar sesión con Google</button>
         </div>
         <div class="config-fila" id="logoutButton" style="display:none;">
           <div class="config-info">
             <strong>Cerrar sesión</strong>
             <span>Vuelve a trabajar en modo local</span>
           </div>
-          <button class="btn btn-peligro btn-sm" onclick="cerrarSesion()">🚪 Cerrar sesión</button>
+          <button class="btn btn-peligro btn-sm" onclick="cerrarSesion()"><i data-lucide="log-out" style="width:14px;height:14px"></i> Cerrar sesión</button>
         </div>
       </div>
 
       <div class="config-section">
-        <div class="config-titulo">🗃️ Datos</div>
+        <div class="config-titulo"><i data-lucide="database" style="width:16px;height:16px"></i> Datos</div>
         <div class="config-fila">
           <div class="config-info">
             <strong>Exportar datos</strong>
             <span>Descarga todos tus productos en formato JSON</span>
           </div>
-          <button class="btn btn-secundario btn-sm" onclick="exportarDatos()">⬇️ Exportar</button>
+          <button class="btn btn-secundario btn-sm" onclick="exportarDatos()"><i data-lucide="download" style="width:14px;height:14px"></i> Exportar</button>
         </div>
         <div class="config-fila">
           <div class="config-info">
@@ -358,7 +336,7 @@
             <span>Carga un archivo de respaldo previo</span>
           </div>
           <label class="btn btn-secundario btn-sm" style="cursor:pointer;">
-            ⬆️ Importar
+            <i data-lucide="upload" style="width:14px;height:14px"></i> Importar
             <input type="file" accept=".json" style="display:none" onchange="importarDatos(event)">
           </label>
         </div>
@@ -367,7 +345,7 @@
             <strong>Borrar todos los datos</strong>
             <span style="color:var(--rojo)">Esta acción no se puede deshacer</span>
           </div>
-          <button class="btn btn-peligro btn-sm" onclick="borrarTodo()">🗑️ Borrar todo</button>
+          <button class="btn btn-peligro btn-sm" onclick="borrarTodo()"><i data-lucide="trash-2" style="width:14px;height:14px"></i> Borrar todo</button>
         </div>
       </div>
     </div>
@@ -375,31 +353,31 @@
 
 </main>
 
-<!-- NAV BOTTOM MÓVIL -->
+<!-- NAV BOTTOM MÓVIL — craft: icons Lucide, sin pill -->
 <div class="nav-bottom">
   <div class="nav-bottom-inner">
     <button class="nav-bottom-btn activo" onclick="mostrarPagina('dashboard', this)" id="nb-dashboard">
-      <span class="nav-icon">🏠</span>Inicio
+      <i data-lucide="house" style="width:20px;height:20px"></i>Inicio
     </button>
     <button class="nav-bottom-btn" onclick="mostrarPagina('inventario', this)" id="nb-inventario">
-      <span class="nav-icon">📦</span>Inventario
+      <i data-lucide="package" style="width:20px;height:20px"></i>Inventario
     </button>
     <button class="nav-bottom-btn modo-negocio-only" onclick="mostrarPagina('ventas', this)" id="nb-ventas">
-      <span class="nav-icon">🛒</span>Ventas
+      <i data-lucide="shopping-cart" style="width:20px;height:20px"></i>Ventas
     </button>
     <button class="nav-bottom-btn modo-negocio-only" onclick="mostrarPagina('reportes', this)" id="nb-reportes">
-      <span class="nav-icon">📊</span>Reportes
+      <i data-lucide="chart-column" style="width:20px;height:20px"></i>Reportes
     </button>
     <button class="nav-bottom-btn" onclick="mostrarPagina('asistente', this)" id="nb-asistente">
-      <span class="nav-icon">🤖</span>IA
+      <i data-lucide="sparkles" style="width:20px;height:20px"></i>IA
     </button>
     <button class="nav-bottom-btn" onclick="mostrarPagina('config', this)" id="nb-config">
-      <span class="nav-icon">⚙️</span>Config
+      <i data-lucide="settings-2" style="width:20px;height:20px"></i>Config
     </button>
   </div>
 </div>
 
-<!-- TOAST CONTAINER -->
+<!-- TOAST -->
 <div class="toast-container" id="toastContainer"></div>
 
 <!-- MODAL AGREGAR/EDITAR PRODUCTO -->
@@ -407,7 +385,7 @@
   <div class="modal">
     <div class="modal-titulo">
       <span id="modalTitulo">Agregar Producto</span>
-      <button class="modal-cerrar" onclick="cerrarModal()">✕</button>
+      <button class="modal-cerrar" onclick="cerrarModal()"><i data-lucide="x" style="width:16px;height:16px"></i></button>
     </div>
     <form id="formProducto" onsubmit="guardarProducto(event)">
       <input type="hidden" id="productoId">
@@ -418,18 +396,12 @@
         </div>
         <div class="form-grupo">
           <label>Marca</label>
-          <input type="text" id="fpMarca" placeholder="Ej: Nestlé, Maggi, Diana..." maxlength="50">
+          <input type="text" id="fpMarca" placeholder="Ej: Nestlé, Maggi..." maxlength="50">
         </div>
         <div class="form-grupo">
           <label>Categoría</label>
           <select id="fpCategoria">
             <option value="General">General</option>
-          </select>
-        </div>
-        <div class="form-grupo modo-bodega-only">
-          <label>Ubicación</label>
-          <select id="fpUbicacion">
-            <option value="">Sin ubicación</option>
           </select>
         </div>
         <div class="form-grupo">
@@ -489,8 +461,8 @@
           <label>Foto del producto (opcional)</label>
           <div class="foto-upload-zona" id="fotoZona">
             <input type="file" id="fpFoto" accept="image/*" onchange="previsualizarFoto(event)">
-            <span class="foto-placeholder-icon">📷</span>
-            <span class="foto-placeholder-txt">Toca para subir una foto.<br><small>JPG, PNG, WEBP · Máx. 2 MB</small></span>
+            <span class="foto-placeholder-icon"><i data-lucide="camera" style="width:28px;height:28px;color:var(--piedra-400)"></i></span>
+            <span class="foto-placeholder-txt">Toca para subir una foto.<br><small>JPG, PNG, WEBP · Máx. 15 MB</small></span>
           </div>
         </div>
         <div class="form-grupo completo">
@@ -500,7 +472,7 @@
       </div>
       <div class="form-acciones">
         <button type="button" class="btn btn-secundario" onclick="cerrarModal()">Cancelar</button>
-        <button type="submit" class="btn btn-primario">💾 Guardar</button>
+        <button type="submit" class="btn btn-primario"><i data-lucide="save" style="width:16px;height:16px"></i> Guardar</button>
       </div>
     </form>
   </div>
@@ -510,15 +482,15 @@
 <div class="modal-overlay" id="modalConfirm" onclick="cerrarConfirm(event)">
   <div class="modal" style="max-width:380px;">
     <div class="modal-titulo">
-      <span>⚠️ Confirmar eliminación</span>
-      <button class="modal-cerrar" onclick="cerrarConfirm()">✕</button>
+      <span><i data-lucide="triangle-alert" style="width:18px;height:18px;color:var(--rojo);vertical-align:-3px"></i> Confirmar eliminación</span>
+      <button class="modal-cerrar" onclick="cerrarConfirm()"><i data-lucide="x" style="width:16px;height:16px"></i></button>
     </div>
-    <p style="color:var(--texto-suave); font-size:0.93rem; margin-bottom:20px;">
+    <p style="color:var(--tinta-suave); font-size:0.93rem; margin-bottom:20px;">
       ¿Estás seguro/a de que deseas eliminar el producto <strong id="confirmNombre"></strong>? Esta acción no se puede deshacer.
     </p>
     <div class="form-acciones">
       <button class="btn btn-secundario" onclick="cerrarConfirm()">Cancelar</button>
-      <button class="btn btn-peligro" onclick="confirmarEliminar()">🗑️ Eliminar</button>
+      <button class="btn btn-peligro" onclick="confirmarEliminar()"><i data-lucide="trash-2" style="width:16px;height:16px"></i> Eliminar</button>
     </div>
   </div>
 </div>
@@ -527,8 +499,8 @@
 <div class="modal-overlay" id="modalPedidos" onclick="cerrarModalPedidos(event)">
   <div class="modal" style="max-width:640px;">
     <div class="modal-titulo">
-      <span>📦 Pedidos</span>
-      <button class="modal-cerrar" onclick="cerrarModalPedidos()">✕</button>
+      <span><i data-lucide="package" style="width:18px;height:18px;vertical-align:-3px"></i> Pedidos</span>
+      <button class="modal-cerrar" onclick="cerrarModalPedidos()"><i data-lucide="x" style="width:16px;height:16px"></i></button>
     </div>
     <div id="pedidosVista"></div>
   </div>
@@ -552,6 +524,8 @@
 <script src="js/ai.js"></script>
 <script type="module" src="js/ai-firebase-bridge.js"></script>
 <script src="js/config.js"></script>
-<script src="js/app.js"></script>?v=2
+<script src="js/accesibilidad.js"></script>
+<script src="js/app.js"></script>
+<script>lucide.createIcons(); document.addEventListener('DOMContentLoaded',()=>{try{lucide.createIcons()}catch(e){}})</script>
 </body>
 </html>

@@ -201,23 +201,25 @@ function renderNuevoPedido() {
   const cont = document.getElementById('pedidosVista');
   if (!cont || esModoBodega()) return;
 
-  // Preservar cantidades ya seleccionadas entre re-renders
   const qtyPrevia = {};
   document.querySelectorAll('#pedidosVista .sc-cantidad').forEach(inp => {
     qtyPrevia[inp.id] = inp.value;
   });
+  const buscarPrev = document.getElementById('pedidoBuscar');
+  const buscarValPrev = buscarPrev ? buscarPrev.value : '';
+  const teniaFocoBuscar = buscarPrev && document.activeElement === buscarPrev;
+  const selStart = teniaFocoBuscar ? buscarPrev.selectionStart : null;
+  const selEnd = teniaFocoBuscar ? buscarPrev.selectionEnd : null;
 
   const bodega = leerProductosOtroModo('bodega');
 
-  // Si la bodega local está vacía, intentar cargarla desde Firebase (sync)
-  if (bodega.length === 0) {
+  if (bodega.length === 0 && !_bodegaFirebaseVerificado) {
     cargarBodegaDesdeFirebase(() => {
-      renderNuevoPedido();
+      if (document.getElementById('pedidoBuscar')) renderNuevoPedido();
     });
   }
 
-  const buscarInput = document.getElementById('pedidoBuscar');
-  const buscar = (buscarInput ? buscarInput.value : '').toLowerCase();
+  const buscar = buscarValPrev.toLowerCase();
   const filtrados = bodega.filter(p =>
     !buscar ||
     (p.nombre || '').toLowerCase().includes(buscar) ||
@@ -228,13 +230,15 @@ function renderNuevoPedido() {
     <div class="pedidos-toolbar">
       <div class="buscador" style="min-width:0">
         <span>🔍</span>
-        <input type="text" id="pedidoBuscar" placeholder="Buscar en bodega..." value="${escHtml(buscar)}" oninput="renderNuevoPedido()">
+        <input type="text" id="pedidoBuscar" placeholder="Buscar en bodega..." value="${escHtml(buscarValPrev)}" oninput="renderNuevoPedido()">
       </div>
       <button class="btn btn-secundario btn-sm" onclick="renderPedidos()">← Volver</button>
     </div>
     ${bodega.length === 0
-      ? '<div class="sin-historial">La bodega no tiene productos para pedir.</div>'
-      : `<div class="pedidos-nuevo-grid">
+      ? '<div class="sin-historial">La bodega no tiene productos para pedir.<br><small style="color:var(--texto-suave)">Ve a <b>Config → Cambiar modo → Bodega</b> y agrega productos, luego vuelve a Tienda para pedirlos.</small><br><button class="btn btn-secundario btn-sm" style="margin-top:10px" onclick="cambiarModoAplicacion()">🔄 Ir a Bodega</button></div>'
+      : filtrados.length === 0
+        ? '<div class="sin-historial">Sin resultados para "' + escHtml(buscarValPrev) + '"</div>'
+        : `<div class="pedidos-nuevo-grid">
           ${filtrados.map(p => `
             <div class="pedido-prod">
               <div class="pedido-prod-info">
@@ -242,16 +246,27 @@ function renderNuevoPedido() {
                 <div class="pedido-prod-detalle">${escHtml(p.categoria || 'General')} · Stock bodega: ${p.stock || 0} ${escHtml(p.unidad || 'unid.')}</div>
               </div>
               <div class="stock-control">
-                <button class="sc-btn restar" onclick="ajustarCantidadPedido('${p.id}', -1)">−</button>
-                <input class="sc-cantidad" type="number" id="pqty-${p.id}" value="${qtyPrevia['pqty-' + p.id] || 0}" min="0" max="${p.stock || 0}" oninput="validarCantidadPedido(this)">
-                <button class="sc-btn sumar" onclick="ajustarCantidadPedido('${p.id}', 1)">+</button>
+                <button type="button" class="sc-btn restar" onclick="ajustarCantidadPedido('${p.id}', -1)" aria-label="Restar">−</button>
+                <input class="sc-cantidad" type="number" inputmode="numeric" pattern="[0-9]*" id="pqty-${p.id}" value="${qtyPrevia['pqty-' + p.id] || 0}" min="0" max="${p.stock || 0}" oninput="validarCantidadPedido(this)">
+                <button type="button" class="sc-btn sumar" onclick="ajustarCantidadPedido('${p.id}', 1)" aria-label="Sumar">+</button>
               </div>
             </div>`).join('')}
         </div>`}
     <div class="form-acciones">
-      <button class="btn btn-secundario" onclick="renderPedidos()">Cancelar</button>
-      <button class="btn btn-primario" onclick="crearPedido()">📦 Crear pedido</button>
+      <button type="button" class="btn btn-secundario" onclick="renderPedidos()">Cancelar</button>
+      <button type="button" class="btn btn-primario" onclick="crearPedido()">📦 Crear pedido</button>
     </div>`;
+
+  if (teniaFocoBuscar) {
+    const nuevoInput = document.getElementById('pedidoBuscar');
+    if (nuevoInput) {
+      nuevoInput.focus();
+      try {
+        if (selStart !== null && selEnd !== null) nuevoInput.setSelectionRange(selStart, selEnd);
+        else nuevoInput.setSelectionRange(nuevoInput.value.length, nuevoInput.value.length);
+      } catch(e) {}
+    }
+  }
 }
 
 function ajustarCantidadPedido(id, delta) {
@@ -372,7 +387,6 @@ function marcarRecibido(id) {
         fechaAbastecimiento: hoy,
         proxAbastecimiento: null,
         proveedor: null,
-        ubicacion: null,
         notas: null,
         foto: null,
         createdAt: new Date().toISOString(),
