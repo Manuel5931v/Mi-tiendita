@@ -535,6 +535,10 @@ tbody td{padding:10px 14px; vertical-align:middle}
 .modal-cerrar:hover{background:var(--piedra-200)}
 
 .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+/* El bloque de opciones adicionales se colapsa con el atributo [hidden].
+   Necesita SELECTOR DE CLASE + ATRIBUTO para ganarle a .form-grid{display:grid}
+   (una clase gana en especificidad al `[hidden]` del user-agent). */
+.campos-adicionales[hidden]{display:none}
 .form-grupo{display:flex; flex-direction:column; gap:6px}
 .form-grupo.completo{grid-column:1 / -1}
 label{
