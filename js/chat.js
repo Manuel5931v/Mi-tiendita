@@ -123,20 +123,60 @@ async function procesarFrase(texto) {
 
 function construirSystemPromptChat() {
   const modo = esModoNegocio() ? 'negocio (tienda)' : 'bodega';
-  const lineas = productos.map(p =>
-    `- id:${p.id} | nombre:${p.nombre} | marca:${p.marca || 'sin marca'} | unidad:${p.unidad || 'unidad'} | precioVenta:${p.precioVenta ?? 0} | stock:${p.stock}`
-  );
+  // Fecha ISO + días relativos para que la IA pueda responder "hace N días" / "en N días"
+  const fmtRel = function (f) {
+    if (!f) return '—';
+    const d = diasHastaFecha(f);
+    if (d === null) return f;
+    if (d < 0) return f + ' (hace ' + Math.abs(d) + 'd)';
+    if (d === 0) return f + ' (hoy)';
+    return f + ' (en ' + d + 'd)';
+  };
+  const lineas = productos.map(p => {
+    const vence = p.fechaVencimiento ? textoFecha(p.fechaVencimiento) : 'sin fecha';
+    return '- id:' + p.id +
+      ' | nombre:' + p.nombre +
+      ' | categoria:' + (p.categoria || 'sin categoria') +
+      ' | marca:' + (p.marca || 'sin marca') +
+      ' | unidad:' + (p.unidad || 'unidad') +
+      ' | precioVenta:' + (p.precioVenta ?? 0) +
+      ' | precioCosto:' + (p.precioCosto ?? 0) +
+      ' | stock:' + p.stock +
+      ' | stockMin:' + (p.stockMin ?? config.umbralStock) +
+      ' | fechaVencimiento:' + vence +
+      ' | ultimoAbastecimiento:' + fmtRel(p.fechaAbastecimiento) +
+      ' | proximoAbastecimiento:' + fmtRel(p.proxAbastecimiento) +
+      ' | proveedor:' + (p.proveedor || 'sin proveedor') +
+      ' | notas:' + (p.notas || 'sin notas');
+  });
+  // Resumen del inventario (misma lógica que el dashboard)
+  const total = productos.length;
+  const agotados = productos.filter(p => p.stock <= 0).length;
+  const bajoStock = productos.filter(p => p.stock > 0 && p.stock <= (p.stockMin ?? config.umbralStock)).length;
+  const vencidos = productos.filter(p => p.fechaVencimiento && diasHastaFecha(p.fechaVencimiento) < 0).length;
+  const proxVencer = productos.filter(p => p.fechaVencimiento && diasHastaFecha(p.fechaVencimiento) >= 0 && diasHastaFecha(p.fechaVencimiento) <= config.diasAviso).length;
+  let resumen = 'RESUMEN DEL INVENTARIO (modo ' + modo + '): totalProductos:' + total +
+    ' | agotados:' + agotados +
+    ' | stockBajo:' + bajoStock +
+    ' | vencidos:' + vencidos +
+    ' | porVencer:' + proxVencer;
+  if (esModoNegocio()) {
+    const valorInventario = productos.reduce((s, p) => s + (p.precioCosto || 0) * p.stock, 0);
+    resumen += ' | valorInventario:' + config.moneda + valorInventario.toFixed(2);
+  }
   return 'Eres "Asistente", el asistente conversacional en español de una app de control de inventario llamada "Mi Tiendita". ' +
     'Debes interpretar la frase del usuario pensando en el INVENTARIO REAL del modo ' + modo + ' que se lista abajo, ' +
     'y responder ÚNICAMENTE con un objeto JSON válido: sin texto adicional, sin markdown, sin comentarios.\n' +
     'INVENTARIO REAL (usa SIEMPRE el campo "id" exacto tal como aparece):\n' + lineas.join('\n') + '\n\n' +
+    resumen + '\n\n' +
     'FORMATO DE RESPUESTA (elige EXACTAMENTE una de estas opciones):\n' +
     '1) Venta identificable sin duda: {"accion":"venta","productoId":"<id exacto>","cantidad":<entero 1-9999>}\n' +
     '2) Abastecimiento identificable sin duda: {"accion":"abastecer","productoId":"<id exacto>","cantidad":<entero 1-9999>}\n' +
-    '3) Pregunta o consulta (cuánto hay, precio, información): {"accion":"consulta","respuesta":"<texto corto en español>"}\n' +
+    '3) Pregunta o consulta (cuánto hay, precio, vencimiento, categoría, proveedor, stock mínimo, abastecimientos, estadísticas del inventario, información): {"accion":"consulta","respuesta":"<texto corto en español>"}\n' +
     '4) La frase pide una acción pero NO puedes identificar SIN DUDA el producto (varios similares o nombre distinto al de la lista): ' +
     '{"accion":"ambiguo","candidatos":[{"productoId":"<id exacto>","nombre":"<nombre exacto>","marca":"...","unidad":"...","precioVenta":<número>,"cantidad":<cantidad inferida o 1>,"accion":"venta o abastecer"}]}\n\n' +
     'Reglas: nunca inventes productos ni ids que no estén en la lista; la cantidad siempre entre 1 y 9999; ' +
+    'para consultas usa los datos del inventario listado arriba (precios, stock, vencimientos, proveedores, categorías, etc.) y responde con datos reales, sin inventar; ' +
     'si la frase no trata de ventas, abastecimientos ni inventario, responde como consulta con una respuesta breve y amable en español.';
 }
 

@@ -49,9 +49,3 @@ if (typeof iniciarApp === 'function') {
 document.getElementById('nuevaCatInput').addEventListener('keypress', function(e) {
   if (e.key === 'Enter') agregarCategoria();
 });
-const ubicInput = document.getElementById('nuevaUbicInput');
-if (ubicInput) {
-  ubicInput.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') agregarUbicacion();
-  });
-}

@@ -45,8 +45,16 @@ function renderConfig() {
   }
   _setDiasAvisoValor(config.diasAviso);
   renderCategorias();
-  if (esModoBodega()) renderUbicaciones();
   actualizarUIAuth();
+  _syncFuenteUI();
+  try{ if(typeof lucide!=='undefined'&&lucide.createIcons) lucide.createIcons(); }catch(e){}
+}
+
+function _syncFuenteUI(){
+  try{
+    const n = localStorage.getItem('tf_fontScale') || 'normal';
+    if(typeof actualizarBotonesFuente==='function') actualizarBotonesFuente(n);
+  }catch(e){}
 }
 
 function renderCategorias() {
@@ -85,41 +93,6 @@ function eliminarCategoria(cat) {
   guardarEnStorage();
   renderCategorias();
   toast(`Categoría "${cat}" eliminada`);
-}
-
-// ❌ ELIMINADA: función eliminarCategoriaSeleccionada()
-
-function renderUbicaciones() {
-  const lista = document.getElementById('listaUbicaciones');
-  if (lista) {
-    lista.innerHTML = (config.ubicaciones || []).map(u => {
-      const esc = escHtml(u).replace(/'/g, "\\'");
-      return `
-      <div class="cat-tag">
-        ${escHtml(u)}
-        <button class="cat-eliminar" onclick="eliminarUbicacion('${esc}')" title="Eliminar">×</button>
-      </div>`;
-    }).join('');
-  }
-}
-
-function agregarUbicacion() {
-  const inp = document.getElementById('nuevaUbicInput');
-  const val = inp.value.trim();
-  if (!val) return;
-  if (!config.ubicaciones) config.ubicaciones = [];
-  if (config.ubicaciones.includes(val)) { toast('Esa ubicación ya existe', 'aviso'); return; }
-  config.ubicaciones.push(val);
-  inp.value = '';
-  guardarEnStorage();
-  renderUbicaciones();
-  toast(`Ubicación "${val}" agregada`);
-}
-
-function eliminarUbicacion(ubic) {
-  config.ubicaciones = config.ubicaciones.filter(u => u !== ubic);
-  guardarEnStorage();
-  renderUbicaciones();
 }
 
 function cambiarModoAplicacion() {

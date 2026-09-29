@@ -2,7 +2,7 @@
 //  INVENTARIO / TABLA
 // ═══════════════════════════════════════
 
-let filtroActual = { buscar: '', categoria: '', stock: '', ubicacion: '' };
+let filtroActual = { buscar: '', categoria: '', stock: '' };
 let idEliminar = null;
 let fotoBase64Actual = null;
 let fotoEliminada = false;
@@ -11,10 +11,6 @@ function filtrarProductos() {
   filtroActual.buscar = document.getElementById('buscarInput').value.toLowerCase();
   filtroActual.categoria = document.getElementById('filtroCategoria').value;
   filtroActual.stock = document.getElementById('filtroStock').value;
-  if (esModoBodega()) {
-    const elUbic = document.getElementById('filtroUbicacion');
-    if (elUbic) filtroActual.ubicacion = elUbic.value;
-  }
   renderTabla();
 }
 
@@ -22,17 +18,12 @@ function limpiarFiltros() {
   filtroActual.buscar = '';
   filtroActual.categoria = '';
   filtroActual.stock = '';
-  if (esModoBodega()) filtroActual.ubicacion = '';
   const buscar = document.getElementById('buscarInput');
   if (buscar) buscar.value = '';
   const cat = document.getElementById('filtroCategoria');
   if (cat) cat.value = '';
   const stock = document.getElementById('filtroStock');
   if (stock) stock.value = '';
-  if (esModoBodega()) {
-    const ubic = document.getElementById('filtroUbicacion');
-    if (ubic) ubic.value = '';
-  }
   renderTabla();
 }
 
@@ -44,17 +35,6 @@ function renderTabla() {
     sel.innerHTML = '<option value="">Todas las categorías</option>' +
       config.categorias.map(c => `<option value="${c}">${c}</option>`).join('');
     sel.value = valActual;
-  }
-
-  // Actualizar opciones de ubicación (solo modo bodega)
-  if (esModoBodega()) {
-    const selUbic = document.getElementById('filtroUbicacion');
-    if (selUbic) {
-      const valUbic = selUbic.value;
-      selUbic.innerHTML = '<option value="">Todas las ubicaciones</option>' +
-        (config.ubicaciones || []).map(u => `<option value="${u}">${u}</option>`).join('');
-      selUbic.value = valUbic;
-    }
   }
 
   let pFiltrados = productos.filter(p => {
@@ -73,8 +53,7 @@ function renderTabla() {
     } else {
       matchStock = !filtroActual.stock || cs === filtroActual.stock;
     }
-    const matchUbic = !esModoBodega() || !filtroActual.ubicacion || p.ubicacion === filtroActual.ubicacion;
-    return matchBuscar && matchCat && matchStock && matchUbic;
+    return matchBuscar && matchCat && matchStock;
   });
 
   const grid = document.getElementById('inventarioGrid');
@@ -101,7 +80,6 @@ function renderTabla() {
         <div class="inventario-card-cat">${escHtml(p.categoria || 'General')}</div>
         <div class="inventario-card-nombre">${escHtml(p.nombre)}</div>
         ${esModoNegocio() ? `<div class="inventario-card-field">Precio: <strong>${precioVenta}</strong></div>` : ''}
-        ${esModoBodega() && p.ubicacion ? `<div class="inventario-card-field">📍 ${escHtml(p.ubicacion)}</div>` : ''}
         <div class="inventario-card-actions">
           <button class="btn btn-secundario btn-sm" type="button" onclick="event.stopPropagation(); editarProducto('${p.id}')">✏️ Editar</button>
           <button class="btn btn-peligro btn-sm" type="button" onclick="event.stopPropagation(); pedirEliminar('${p.id}')">🗑️ Eliminar</button>
@@ -186,14 +164,6 @@ function abrirModalProducto(id = null) {
   const sel = document.getElementById('fpCategoria');
   sel.innerHTML = config.categorias.map(c => `<option value="${c}">${c}</option>`).join('');
 
-  if (esModoBodega()) {
-    const selUbic = document.getElementById('fpUbicacion');
-    if (selUbic) {
-      selUbic.innerHTML = '<option value="">Sin ubicación</option>' +
-        (config.ubicaciones || []).map(u => `<option value="${u}">${u}</option>`).join('');
-    }
-  }
-
   document.getElementById('fpPrecioVenta').required = esModoNegocio();
 
   if (id) {
@@ -213,8 +183,6 @@ function abrirModalProducto(id = null) {
     document.getElementById('fpProveedor').value = p.proveedor || '';
     document.getElementById('fpNotas').value = p.notas || '';
     if (esModoBodega()) {
-      const elUbic = document.getElementById('fpUbicacion');
-      if (elUbic) elUbic.value = p.ubicacion || '';
       document.getElementById('fpFechaCompra').value = p.fechaCompra || '';
     }
     fotoEliminada = false;
@@ -229,6 +197,7 @@ function abrirModalProducto(id = null) {
     aplicarFotoEnZona(null);
   }
 
+  resetOpcionesAdicionales();
   document.getElementById('modalOverlay').classList.add('visible');
 }
 
@@ -238,6 +207,24 @@ function cerrarModal() {
 
 function cerrarModalSiOverlay(e) {
   if (e.target === document.getElementById('modalOverlay')) cerrarModal();
+}
+
+function toggleOpcionesAdicionales() {
+  const bloque = document.getElementById('bloqueOpcionesAdicionales');
+  const btn = document.getElementById('btnOpcionesAdicionales');
+  const abierto = bloque.hasAttribute('hidden');
+  if (abierto) bloque.removeAttribute('hidden'); else bloque.setAttribute('hidden', '');
+  btn.setAttribute('aria-expanded', String(abierto));
+  btn.textContent = abierto ? 'Ocultar opciones ▲' : 'Ver más opciones ▼';
+}
+
+function resetOpcionesAdicionales() {
+  const bloque = document.getElementById('bloqueOpcionesAdicionales');
+  const btn = document.getElementById('btnOpcionesAdicionales');
+  if (!bloque || !btn) return;
+  bloque.setAttribute('hidden', '');
+  btn.setAttribute('aria-expanded', 'false');
+  btn.textContent = 'Ver más opciones ▼';
 }
 
 function guardarProducto(e) {
@@ -257,7 +244,6 @@ function guardarProducto(e) {
     fechaAbastecimiento: esModoNegocio() ? (document.getElementById('fpFechaAbastecimiento').value || null) : null,
     proxAbastecimiento: esModoNegocio() ? (document.getElementById('fpProxAbastecimiento').value || null) : null,
     proveedor: esModoNegocio() ? (document.getElementById('fpProveedor').value.trim() || null) : null,
-    ubicacion: esModoBodega() ? (document.getElementById('fpUbicacion')?.value || null) : null,
     fechaCompra: esModoBodega() ? (document.getElementById('fpFechaCompra').value || null) : null,
     notas: document.getElementById('fpNotas').value.trim() || null,
     foto: fotoEliminada ? null : (fotoBase64Actual || (id ? (productos.find(p=>p.id===id)||{}).foto || null : null)),
@@ -315,7 +301,6 @@ function confirmarEliminar() {
 function abrirInventarioFiltrado(filtro) {
   if (filtroActual.buscar) filtroActual.buscar = '';
   filtroActual.categoria = '';
-  if (esModoBodega()) filtroActual.ubicacion = '';
   filtroActual.stock = filtro;
   mostrarPagina('inventario');
   renderTabla();
