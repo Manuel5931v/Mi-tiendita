@@ -122,16 +122,10 @@ function ajustarCantidadInput(id, delta) {
   inp.value = val;
 }
 
-function registrarVenta(id, qty) {
+function registrarVenta(id) {
   const p = productos.find(x => x.id === id);
   if (!p) return;
-
-  // Si no se pasa cantidad, leer del input de la tarjeta (comportamiento original)
-  if (qty === undefined || qty === null) {
-    qty = parseInt(document.getElementById('qty-' + id).value) || 1;
-  } else {
-    qty = parseInt(typeof qty === 'object' ? qty.qty : qty) || 1;
-  }
+  const qty = parseInt(document.getElementById('qty-' + id).value) || 1;
 
   if (p.stock < qty) {
     toast(`Solo hay ${p.stock} ${p.unidad || 'unid.'} disponibles`, 'aviso');
@@ -176,16 +170,10 @@ function registrarVenta(id, qty) {
   if (agotadoAhora) setTimeout(() => renderVentas(), 600);
 }
 
-function registrarAbastecimiento(id, qty) {
+function registrarAbastecimiento(id) {
   const p = productos.find(x => x.id === id);
   if (!p) return;
-
-  // Si no se pasa cantidad, leer del input de la tarjeta (comportamiento original)
-  if (qty === undefined || qty === null) {
-    qty = parseInt(document.getElementById('qty-' + id).value) || 1;
-  } else {
-    qty = parseInt(typeof qty === 'object' ? qty.qty : qty) || 1;
-  }
+  const qty = parseInt(document.getElementById('qty-' + id).value) || 1;
 
   p.stock += qty;
   p.fechaAbastecimiento = new Date().toISOString().slice(0, 10);

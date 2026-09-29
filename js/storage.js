@@ -8,7 +8,8 @@ let config = {
   moneda: '$',
   umbralStock: 5,
   diasAviso: 15,
-  categorias: ['Alimentos', 'Bebidas', 'Limpieza', 'Cuidado personal', 'Papelería', 'Otros']
+  categorias: ['Alimentos', 'Bebidas', 'Limpieza', 'Cuidado personal', 'Papelería', 'Otros'],
+  ubicaciones: ['Despensa', 'Refrigerador', 'Congelador', 'Estante A', 'Estante B', 'Bodega Principal', 'Mostrador', 'Otro']
 };
 
 function claveModo() {
@@ -113,7 +114,8 @@ function borrarTodo() {
   if (!confirm('⚠️ ¿Seguro/a? Se borrarán TODOS los productos y configuraciones. Esta acción no se puede deshacer.')) return;
   productos = [];
   config = { nombreTienda: 'Mi Tienda', moneda: '$', umbralStock: 5, diasAviso: 15,
-    categorias: ['Alimentos', 'Bebidas', 'Limpieza', 'Cuidado personal', 'Papelería', 'Otros'] };
+    categorias: ['Alimentos', 'Bebidas', 'Limpieza', 'Cuidado personal', 'Papelería', 'Otros'],
+    ubicaciones: ['Despensa', 'Refrigerador', 'Congelador', 'Estante A', 'Estante B', 'Bodega Principal', 'Mostrador', 'Otro'] };
   sugerenciasIA = [];
   if (typeof guardarSugerenciasIA === 'function') guardarSugerenciasIA();
   if (typeof pedidos !== 'undefined') {
